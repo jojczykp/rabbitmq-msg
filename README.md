@@ -10,27 +10,29 @@ Docker, Maven, Node.js
 
 # Run
 
-1. Build Consumer
-
-``cd webapp``
-``npm install amqplib``
-
-2. Build Producer
-
-``mvn clean package``
-
-3. Start docker RabbitMQ image
+1. Start docker RabbitMQ image
 
 ``mvn docker:start``
 
-4. Run consumer
+2. Consumer (`consumer` folder)
+    1. Build
+    
+    `npm install amqplib`
 
-``node consumer.js``
+    2. Run
 
-5. Run Producer
+    `node consumer`
 
-``java -jar target\rabbitmsg-1.0-SNAPSHOT.jar``
+3. Producer (main folder)
 
-6. Stop docker RabbitMQ image
+    1. Build
 
-``mvn docker:stop``
+    `mvn clean package`
+
+    2. Run
+
+    `java -jar target\rabbitmsg-1.0-SNAPSHOT.jar`
+
+4. Stop docker RabbitMQ image
+
+`mvn docker:stop`

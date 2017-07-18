@@ -20,6 +20,8 @@ public class Producer {
 
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
+        System.out.println("Listening to queue " + QUEUE_NAME + " on host " + HOST);
+
         for (int i = 0 ; i < 10 ; i++) {
             sendMessage(channel, "Hello World " + i + "!");
         }
@@ -31,7 +33,7 @@ public class Producer {
     private static void sendMessage(Channel channel, String message) throws IOException {
         channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
 
-        System.out.println(" [x] Sent '" + message + "'");
+        System.out.println("Sent: '" + message + "'");
         sleepSec();
     }
 
