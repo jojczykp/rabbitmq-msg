@@ -1,3 +1,5 @@
 *.iml
 .idea/
 target/
+webapp/node_modules/
+webapp/npm-debug.log

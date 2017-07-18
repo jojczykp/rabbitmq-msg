@@ -5,24 +5,32 @@ Pet project for playing with RabbitMQ
 
 # Prerequisites
 
-Maven, Docker
+Docker, Maven, Node.js
 
 
 # Run
 
-1. Build
+1. Build Consumer
+
+``cd webapp``
+``npm install amqplib``
+
+2. Build Producer
 
 ``mvn clean package``
 
-
-2. Start docker RabbitMQ image
+3. Start docker RabbitMQ image
 
 ``mvn docker:start``
 
+4. Run consumer
 
-3. Run application
+``node consumer.js``
 
+5. Run Producer
 
-4. Stop docker RabbitMQ image
+``java -jar target\rabbitmsg-1.0-SNAPSHOT.jar``
+
+6. Stop docker RabbitMQ image
 
 ``mvn docker:stop``
