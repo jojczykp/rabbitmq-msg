@@ -1,4 +1,4 @@
-package pl.jojczykp.rabbitmsg;
+package pl.jojczykp.rabbitmq_msg;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;

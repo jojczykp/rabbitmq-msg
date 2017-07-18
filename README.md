@@ -31,7 +31,7 @@ Docker, Maven, Node.js
 
     2. Run
 
-    `java -jar target\rabbitmsg-1.0-SNAPSHOT.jar`
+    `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar`
 
 4. Stop docker RabbitMQ image
 
