@@ -2,7 +2,7 @@
 
 Pet project for playing with RabbitMQ.
 * RabitMQ - Docker image
-* Produver - Java
+* Producer - Java
 * Consumer - Node.js
 
 
