@@ -1,6 +1,9 @@
 # Rabbit MSG
 
-Pet project for playing with RabbitMQ
+Pet project for playing with RabbitMQ.
+* RabitMQ - Docker image
+* Produver - Java
+* Consumer - Node.js
 
 
 # Prerequisites
