@@ -4,7 +4,7 @@ Pet project for playing with RabbitMQ.
 
 Host (docker image IP) and queue name hardcoded in .java and .js files. 
 
-* RabitMQ - Docker image
+* RabbitMQ - Docker image
 * Producer - Java
 * Consumer - Node.js
 
