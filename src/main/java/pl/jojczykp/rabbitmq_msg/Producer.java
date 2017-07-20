@@ -22,31 +22,21 @@ public class Producer {
         String producerId = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
         String userId = args[0];
 
-        Connection connection = null;
-        Channel channel = null;
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(HOST);
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
 
-        try {
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost(HOST);
-            connection = factory.newConnection();
-            channel = connection.createChannel();
+        channel.exchangeDeclare(EXCHANGE_NAME, "direct");
 
-            channel.exchangeDeclare(EXCHANGE_NAME, "direct");
+        System.out.println(String.format("Sending messages to %s@%s/%s. To exit press CTRL+C", userId, EXCHANGE_NAME, HOST));
+        registerToCloseOnExit(connection, channel);
 
-            System.out.println(String.format("Sending messages to %s@%s/%s. To exit press CTRL+C", userId, EXCHANGE_NAME, HOST));
-
-            for (int i = 0; ; i++) {
-                sendMessage(channel, userId, String.format("Hello World %d from %s!", i, producerId));
-            }
-        } catch (RuntimeException e) {
-            if (channel != null) {
-                channel.close();
-            }
-
-            if (connection != null) {
-                connection.close();
-            }
+        int i = 0;
+        while (true) {
+            sendMessage(channel, userId, String.format("Hello World %d from %s!", ++i, producerId));
         }
+
     }
 
     private static void sendMessage(Channel channel, String userId, String message) throws IOException {
@@ -61,5 +51,17 @@ public class Producer {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static void registerToCloseOnExit(Connection connection, Channel channel) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                channel.close();
+                connection.close();
+                System.out.println("Connection closed");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }));
     }
 }
