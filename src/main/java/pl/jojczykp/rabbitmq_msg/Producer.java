@@ -10,7 +10,7 @@ import java.util.concurrent.TimeoutException;
 
 public class Producer {
 
-    private static final String HOST = "192.168.99.100";
+    private static final String HOST = "localhost";
     private final static String EXCHANGE_NAME = "sample-exchange";
 
     public static void main(String[] args) throws IOException, TimeoutException {

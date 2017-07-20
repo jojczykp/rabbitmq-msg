@@ -4,12 +4,12 @@
 
 var amqp = require('amqplib/callback_api');
 
-var host = '192.168.99.100';
+var host = 'localhost';
 var exchangeName = 'sample-exchange';
 
 var args = process.argv.slice(2);
 if (args.length == 0) {
-    console.log("Usage: consumer.js userId");
+    console.log('Usage: consumer.js userId');
     process.exit(1);
 }
 var userId = args[0];
@@ -24,7 +24,7 @@ amqp.connect('amqp://' + host, function(err, conn) {
             ch.bindQueue(q.queue, exchangeName, userId);
 
             ch.consume(q.queue, function(msg) {
-                console.log("Received on %s@%s/%s: %s", msg.fields.routingKey, msg.fields.exchange, host, msg.content.toString());
+                console.log('Received on %s@%s/%s: %s', msg.fields.routingKey, msg.fields.exchange, host, msg.content.toString());
             }, {noAck: true});
         });
     });
