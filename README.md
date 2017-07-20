@@ -2,7 +2,7 @@
 
 Pet project for playing with RabbitMQ.
 
-Demonstrates usage of a single exchange to deliver messages from multiple producers to multiple consumers, for two different producer/consumer sets (user1, user2).
+Demonstrates usage of a single exchange to deliver messages from multiple producers to multiple consumers, for two different producer/consumer sets (user1, user2), using _routingKey_.
 
 Host (_localhost_) and exchange name hardcoded in _.java_ and _.js_ files. 
 
