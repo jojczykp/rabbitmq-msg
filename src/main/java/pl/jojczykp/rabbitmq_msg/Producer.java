@@ -27,7 +27,8 @@ public class Producer {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
-        channel.exchangeDeclare(EXCHANGE_NAME, "direct");
+        boolean durable = true;
+        channel.exchangeDeclare(EXCHANGE_NAME, "direct", durable);
 
         System.out.println(String.format("Sending messages to %s@%s/%s. To exit press CTRL+C", userId, EXCHANGE_NAME, HOST));
         registerToCloseOnExit(connection, channel);

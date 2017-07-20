@@ -82,16 +82,18 @@
                 <configuration>
                     <images>
                         <image>
-                            <name>library/rabbitmq:3.6.10</name>
+                            <name>rabbitmq:3.6.10-management</name>
                             <alias>rabbitmq</alias>
                             <run>
                                 <ports>
                                     <port>5672:5672/tcp</port>
+                                    <port>15672:15672/tcp</port>
                                 </ports>
                                 <wait>
                                     <tcp>
                                         <ports>
                                             <port>5672</port>
+                                            <port>15672</port>
                                         </ports>
                                     </tcp>
                                     <time>30000</time>

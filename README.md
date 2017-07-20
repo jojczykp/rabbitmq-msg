@@ -29,6 +29,8 @@ We expect:
 
     `mvn docker:start`
 
+    To see admin console go to [http://localhost:15672/#/queues](http://localhost:15672/#/queues)
+
 2. Consumer (in `consumer` folder)
 
     `cd consumer`
