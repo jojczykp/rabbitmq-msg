@@ -6,7 +6,7 @@
 
     <groupId>pl.jojczykp</groupId>
     <artifactId>rabbitmq-msg</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1</version>
     <name>rabbitmq-msg</name>
     <url>https://github.com/jojczykp/rabbitmq-msg</url>
 

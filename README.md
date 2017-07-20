@@ -57,13 +57,13 @@ We expect:
 
     2. Run (each command in separate console)
 
-        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user1`
+        `java -jar target\rabbitmq-msg-0.0.1.jar user1`
     
-        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user1`
+        `java -jar target\rabbitmq-msg-0.0.1.jar user1`
 
-        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user2`
+        `java -jar target\rabbitmq-msg-0.0.1.jar user2`
     
-        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user2`
+        `java -jar target\rabbitmq-msg-0.0.1.jar user2`
 
 4. Stop docker RabbitMQ image
 
