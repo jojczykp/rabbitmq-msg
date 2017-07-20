@@ -35,35 +35,36 @@ We expect:
     
     1. Build
     
-    `npm install`
+        `npm install`
 
     2. Run (each command in separate console)
     
-    `node consumer.js user1`
+        `node consumer.js user1`
     
-    `node consumer.js user1`
+        `node consumer.js user1`
     
-    `node consumer.js user2`
+        `node consumer.js user2`
     
-    `node consumer.js user2`
+        `node consumer.js user2`
 
 3. Producer (in main folder)
 
     `[make sure in same folder as pom.xml]`
+    
     1. Build
 
-    `mvn clean package`
+        `mvn clean package`
 
     2. Run (each command in separate console)
 
-    `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user1`
+        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user1`
     
-    `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user1`
+        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user1`
 
-    `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user2`
+        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user2`
     
-    `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user2`
+        `java -jar target\rabbitmq-msg-1.0-SNAPSHOT.jar user2`
 
 4. Stop docker RabbitMQ image
 
-`mvn docker:stop`
+    `mvn docker:stop`
