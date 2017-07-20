@@ -1,4 +1,4 @@
-# Rabbit MSG
+# RabbitMQ MSG
 
 Pet project for playing with RabbitMQ.
 
