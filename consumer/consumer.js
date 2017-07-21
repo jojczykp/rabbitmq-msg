@@ -5,7 +5,7 @@
 var amqp = require('amqplib/callback_api');
 
 var host = 'localhost';
-var exchangeName = 'sample-exchange';
+var exchangeName = 'sync-exchange';
 
 var args = process.argv.slice(2);
 if (args.length != 2) {
@@ -21,14 +21,15 @@ amqp.connect('amqp://' + host, function(err, conn) {
 
         var queueName = userId + '.' + clientId;
 
-        // http://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
-        var queueProps = {
-            durable: true,
-            arguments: {
-                'x-expires': 60 * 1000, // how long (ms) queue waits for client to reconnect before removed
-                'x-max-length': 20      // on overflow oldest dropped
-            }
-        }
+//        // http://www.squaremobius.net/amqp.node/channel_api.html#channel_assertQueue
+//        var queueProps = {
+//            durable: true,
+//            arguments: {
+//                'x-expires': 300 * 1000, // how long (ms) queue waits for client to reconnect before removed
+//                'x-max-length': 40      // on overflow oldest dropped
+//            }
+//        }
+        var queueProps = null; // Props come from policy defined on server
 
         ch.assertQueue(queueName, queueProps, function(err, q) {
             console.log('%s: Waiting for messages to %s@%s/%s. To exit press CTRL+C', clientId, userId, exchangeName, host);
@@ -37,7 +38,8 @@ amqp.connect('amqp://' + host, function(err, conn) {
 
             ch.consume(q.queue, function(msg) {
                 console.log('%s: Received on %s@%s/%s: %s', clientId, msg.fields.routingKey, msg.fields.exchange, host, msg.content.toString());
-            }, {noAck: true});
+                ch.ack(msg);
+            }, {noAck: false});
         });
     });
 });

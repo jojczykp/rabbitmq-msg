@@ -97,6 +97,13 @@
                                         </ports>
                                     </tcp>
                                     <time>30000</time>
+                                    <exec>
+                                        <!--
+                                            ttl: 1min
+                                            buf size: 20
+                                        -->
+                                        <postStart>rabbitmqctl set_policy --apply-to queues client-queues ^.*$ {"expires":60000,"max-length":20}</postStart>
+                                    </exec>
                                 </wait>
                                 <log>
                                     <color>yellow</color>

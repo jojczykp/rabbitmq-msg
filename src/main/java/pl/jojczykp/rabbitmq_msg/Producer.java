@@ -11,7 +11,7 @@ import java.util.concurrent.TimeoutException;
 public class Producer {
 
     private static final String HOST = "localhost";
-    private final static String EXCHANGE_NAME = "sample-exchange";
+    private final static String EXCHANGE_NAME = "sync-exchange";
 
     public static void main(String[] args) throws IOException, TimeoutException {
         if (args.length < 1) {

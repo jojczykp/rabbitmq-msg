@@ -8,6 +8,8 @@ Demonstrates usage of a single exchange to deliver messages from multiple produc
 
 Host (_localhost_) and exchange name hardcoded in _.java_ and _.js_ files. 
 
+Queue parameters (i.e. expiry time) defined on server (see _pom.xml_).
+
 * RabbitMQ - Docker image
 * Producer - Java
 * Consumer - Node.js
@@ -25,11 +27,13 @@ We expect:
 * Both user1 consumers receiving messages form both user1 producers only
 * Both user2 consumers receiving messages form both user2 producers only
 
+
 1. Start docker RabbitMQ image
 
     `mvn docker:start`
 
     To see admin console go to [http://localhost:15672/#/queues](http://localhost:15672/#/queues)
+
 
 2. Consumer (in `consumer` folder)
 
@@ -41,13 +45,14 @@ We expect:
 
     2. Run (each command in separate console)
     
-        `node consumer.js user1`
+        `node consumer.js user1 client11`
     
-        `node consumer.js user1`
+        `node consumer.js user1 client12`
     
-        `node consumer.js user2`
+        `node consumer.js user2 client21`
     
-        `node consumer.js user2`
+        `node consumer.js user2 client22`
+
 
 3. Producer (in main folder)
 
@@ -66,6 +71,7 @@ We expect:
         `java -jar target\rabbitmq-msg-0.0.1.jar user2`
     
         `java -jar target\rabbitmq-msg-0.0.1.jar user2`
+
 
 4. Stop docker RabbitMQ image
 
