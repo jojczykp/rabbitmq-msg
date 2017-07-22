@@ -82,13 +82,18 @@
                 <configuration>
                     <images>
                         <image>
-                            <name>rabbitmq:3.6.10-management</name>
+                            <name>library/rabbitmq:3.6.10-management</name>
                             <alias>rabbitmq</alias>
                             <run>
                                 <ports>
                                     <port>5672:5672/tcp</port>
                                     <port>15672:15672/tcp</port>
                                 </ports>
+                                <volumes>
+                                    <bind>
+                                        <volume>${project.basedir}/src/main/resources/rabbitmq:/etc/rabbitmq:ro</volume>
+                                    </bind>
+                                </volumes>
                                 <wait>
                                     <tcp>
                                         <ports>
