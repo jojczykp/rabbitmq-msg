@@ -17,25 +17,41 @@ Queue parameters (i.e. expiry time) defined on server (see _pom.xml_).
 
 # Running
 
-We are going to start:
-* 2 producers for user1
-* 2 producers for user2
-* 2 consumers for user1
-* 2 consumers for user2
+We are going to start 2 producers and 2 consumers.
 
 We expect:
-* Both user1 consumers receiving messages form both user1 producers only
-* Both user2 consumers receiving messages form both user2 producers only
+* consumer1 receiving from producer1 and producer2
+* consumer2 receiving from producer1 and producer2
+* Other producers/consumers have no access permission (hardcoded in Auth Service)
+
+1. Build
+
+    `mvn clean package`
 
 
-1. Start docker RabbitMQ image
+2. Start docker RabbitMQ and Auth Service images
 
     `mvn docker:start`
 
     To see admin console go to [http://localhost:15672/#/queues](http://localhost:15672/#/queues)
 
 
-2. Consumer (in `consumer` folder)
+3. Producers (in main folder)
+
+    Make sure you are in same folder as _pom.xml_.
+    
+    Run (each command in separate console)
+
+    `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.producer.Producer producer1 consumer1`
+
+    `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.producer.Producer producer1 consumer2`
+
+    `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.producer.Producer producer2 consumer1`
+
+    `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.producer.Producer producer2 consumer2`
+
+
+4. Consumers (in `consumer` folder)
 
     `cd consumer`
     
@@ -45,34 +61,15 @@ We expect:
 
     2. Run (each command in separate console)
     
-        `node consumer.js user1 client11`
+        `node consumer.js consumer1 consumerInstance11`
     
-        `node consumer.js user1 client12`
+        `node consumer.js consumer1 consumerInstance12`
     
-        `node consumer.js user2 client21`
+        `node consumer.js consumer2 consumerInstance21`
     
-        `node consumer.js user2 client22`
+        `node consumer.js consumer2 consumerInstance22`
 
 
-3. Producer (in main folder)
-
-    `[make sure in same folder as pom.xml]`
-    
-    1. Build
-
-        `mvn clean package`
-
-    2. Run (each command in separate console)
-
-        `java -jar target\rabbitmq-msg-0.0.1.jar user1`
-    
-        `java -jar target\rabbitmq-msg-0.0.1.jar user1`
-
-        `java -jar target\rabbitmq-msg-0.0.1.jar user2`
-    
-        `java -jar target\rabbitmq-msg-0.0.1.jar user2`
-
-
-4. Stop docker RabbitMQ image
+5. Stop docker RabbitMQ image
 
     `mvn docker:stop`
