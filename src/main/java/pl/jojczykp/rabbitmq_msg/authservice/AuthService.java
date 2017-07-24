@@ -14,7 +14,7 @@ import static com.google.common.collect.Sets.union;
 public class AuthService {
 
     private static final int PORT = 8000;
-    private static final String URL_PREFIX = "/sync/auth/";
+    private static final String URL_PREFIX = "/auth/";
 
     private static final String EXCHANGE = "sample-exchange";
     private static final String VHOST = "/";
