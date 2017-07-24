@@ -28,7 +28,7 @@ abstract class AbstractAuthHandler implements HttpHandler {
             Map<String, String> params = getParams(t);
             System.out.println("Params: " + params);
 
-            String response = isProperAdmin(params) || handleNonAdmin(params) ? "allow" : "deny";
+            String response = handleNonAdmin(params) ? "allow" : "deny";
 
             sendResponse(t, response);
             System.out.println("<<< " + response);
@@ -37,25 +37,15 @@ abstract class AbstractAuthHandler implements HttpHandler {
         }
     }
 
-    private boolean isProperAdmin(Map<String, String> params) {
-        return "guest".equals(params.get("username")) &&
-                "guest".equals(params.get("password"));
-    }
-
     private boolean handleNonAdmin(Map<String, String> params) {
-        boolean allowed;
         String authToken = params.get("username");
         String authTokenDataStr = authToken.split(" ")[1];
-        String[] authTokenData = authTokenDataStr.split(",");
-        String userId = authTokenData[0];
-        String clientId = authTokenData[1];
-        System.out.println("UserId: " + userId + ", ClientId: " + clientId);
+        String userId = authTokenDataStr.split(",")[0];
 
-        allowed = isAllowed(userId, clientId, params);
-        return allowed;
+        return isAllowed(userId, params);
     }
 
-    protected abstract boolean isAllowed(String userId, String clientId, Map<String, String> params);
+    protected abstract boolean isAllowed(String userId, Map<String, String> params);
 
     private static Map<String, String> getParams(HttpExchange t) throws IOException {
         String bodyString = streamToString(t.getRequestBody());

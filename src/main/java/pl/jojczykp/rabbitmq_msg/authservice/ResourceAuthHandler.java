@@ -18,7 +18,7 @@ class ResourceAuthHandler extends AbstractAuthHandler {
     }
 
     @Override
-    protected boolean isAllowed(String userId, String clientId, Map<String, String> params) {
+    protected boolean isAllowed(String userId, Map<String, String> params) {
         String type = params.get("resource");
         String name = params.get("name");
 
@@ -26,7 +26,7 @@ class ResourceAuthHandler extends AbstractAuthHandler {
             case "exchange":
                 return isExchangeAllowed(name, userId, params.get("permission"));
             case "queue":
-                return isQueueAllowed(userId, clientId, name);
+                return isQueueAllowed(userId, name);
             default:
                 return false;
         }
@@ -42,7 +42,7 @@ class ResourceAuthHandler extends AbstractAuthHandler {
         );
     }
 
-    private boolean isQueueAllowed(String userId, String clientId, String name) {
-        return (userId + "." + clientId).equals(name);
+    private boolean isQueueAllowed(String userId, String name) {
+        return name.startsWith(userId + ".");
     }
 }

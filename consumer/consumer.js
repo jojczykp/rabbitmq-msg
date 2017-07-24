@@ -16,7 +16,7 @@ var consumerId = args[0];
 var clientInstanceId = getRandomInt(100, 999);
 
 var authTokenTimestamp = 12345;
-var authTokenData = consumerId + ',' + clientInstanceId + ',' + authTokenTimestamp;
+var authTokenData = consumerId + ',' + authTokenTimestamp;
 var authTokenChecksum = 123;
 var authToken = 'Bearer ' + authTokenData + ',' + authTokenChecksum;
 

@@ -12,7 +12,7 @@ class UserAuthHandler extends AbstractAuthHandler {
     }
 
     @Override
-    protected boolean isAllowed(String userId, String clientId, Map<String, String> params) {
+    protected boolean isAllowed(String userId, Map<String, String> params) {
         return users.contains(userId);
     }
 }
