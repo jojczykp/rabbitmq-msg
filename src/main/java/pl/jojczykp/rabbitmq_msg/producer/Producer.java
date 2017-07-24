@@ -5,9 +5,9 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
 public class Producer {
@@ -22,40 +22,41 @@ public class Producer {
         }
 
         String producerId = args[0];
-        String producerInstanceId = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+        int producerInstanceId = new Random().nextInt(1000) + 20000;
         List<String> consumerIds = Arrays.asList(args).subList(1, args.length);
 
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
-        factory.setUsername(createAuthToken(producerId, producerInstanceId));
+        factory.setUsername(createAuthToken(producerId));
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
         boolean durable = true;
         channel.exchangeDeclare(EXCHANGE_NAME, "direct", durable);
 
-        System.out.println(String.format("Sending messages to %s@%s/%s. To exit press CTRL+C", consumerIds, EXCHANGE_NAME, HOST));
+        System.out.println(String.format("%s.%s: Sending messages to %s@%s/%s. To exit press CTRL+C", producerId, producerInstanceId, consumerIds, EXCHANGE_NAME, HOST));
         registerToCloseOnExit(connection, channel);
 
         int i = 0;
         while (true) {
-            sendMessage(producerId + "/" + producerInstanceId, channel, consumerIds, String.format("Hello World %d from %s!", ++i, producerInstanceId));
+            sendMessage(producerId, producerInstanceId, channel, consumerIds,
+                    String.format("Hello World %d from %s.%d!", ++i, producerId, producerInstanceId));
         }
     }
 
-    private static String createAuthToken(String producerId, String producerInstanceId) {
+    private static String createAuthToken(String producerId) {
         long authTokenTimestamp = 12345;
-        String authTokenData = producerId + ',' + producerInstanceId + ',' + authTokenTimestamp;
+        String authTokenData = producerId + ',' + authTokenTimestamp;
         long authTokenChecksum = 123;
         return "Bearer " + authTokenData + ',' + authTokenChecksum;
     }
 
-    private static void sendMessage(String logPrefix, Channel channel, List<String> consumerIds, String message) throws IOException {
+    private static void sendMessage(String producerId, int producerInstanceId, Channel channel, List<String> consumerIds, String message) throws IOException {
         for (String consumerId : consumerIds) {
             channel.basicPublish(EXCHANGE_NAME, consumerId, null, message.getBytes());
         }
 
-        System.out.println(String.format("%s: Sent to %s@%s/%s: %s", logPrefix, consumerIds, EXCHANGE_NAME, HOST, message));
+        System.out.println(String.format("%s.%d: Sent to %s@%s/%s: %s", producerId, producerInstanceId, consumerIds, EXCHANGE_NAME, HOST, message));
         sleepSec();
     }
 

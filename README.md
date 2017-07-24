@@ -18,7 +18,7 @@ Hardcoded 'allow' credentials for:
 * producer1, producer2
 * consumer1, consumer2, consumer3
 
-Other producers/consumers fails on access permissions.
+Other producers/consumers fail on access permissions.
 
 
 # Running
@@ -65,23 +65,23 @@ Other producers/consumers fails on access permissions.
 
         1. Consuming from both producers:
     
-            `node consumer.js consumer1 consumerInstance11`
+            `node consumer.js consumer1`
     
-            `node consumer.js consumer1 consumerInstance12`
+            `node consumer.js consumer1`
 
         2. Consuming from producer1 only (since producer2 does not send to consumer2):
 
-            `node consumer.js consumer2 consumerInstance21`
+            `node consumer.js consumer2`
     
-            `node consumer.js consumer2 consumerInstance22`
+            `node consumer.js consumer2`
 
         3. Not consuming at all (no producer sending to consumer3):
 
-            `node consumer.js consumer3 consumerInstance31`
+            `node consumer.js consumer3`
 
         4. Failing with access denied (only consumer{1,2,3} have permission):
 
-            `node consumer.js consumer4 consumerInstance41`
+            `node consumer.js consumer4`
 
 
 5. Stop docker RabbitMQ image
