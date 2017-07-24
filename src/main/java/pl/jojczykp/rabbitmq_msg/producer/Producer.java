@@ -6,6 +6,8 @@ import com.rabbitmq.client.ConnectionFactory;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public class Producer {
@@ -15,13 +17,13 @@ public class Producer {
 
     public static void main(String[] args) throws IOException, TimeoutException {
         if (args.length < 2) {
-            System.err.println("Usage: java -cp <app-jar> " + Producer.class.getName() + " producerId consumerId");
+            System.err.println("Usage: java -cp <app-jar> " + Producer.class.getName() + " producerId consumerId1 consumerId2 ...");
             System.exit(1);
         }
 
         String producerId = args[0];
         String producerInstanceId = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
-        String consumerId = args[1];
+        List<String> consumerIds = Arrays.asList(args).subList(1, args.length);
 
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
@@ -32,12 +34,12 @@ public class Producer {
         boolean durable = true;
         channel.exchangeDeclare(EXCHANGE_NAME, "direct", durable);
 
-        System.out.println(String.format("Sending messages to %s@%s/%s. To exit press CTRL+C", consumerId, EXCHANGE_NAME, HOST));
+        System.out.println(String.format("Sending messages to %s@%s/%s. To exit press CTRL+C", consumerIds, EXCHANGE_NAME, HOST));
         registerToCloseOnExit(connection, channel);
 
         int i = 0;
         while (true) {
-            sendMessage(producerId + "/" + producerInstanceId, channel, consumerId, String.format("Hello World %d from %s!", ++i, producerInstanceId));
+            sendMessage(producerId + "/" + producerInstanceId, channel, consumerIds, String.format("Hello World %d from %s!", ++i, producerInstanceId));
         }
     }
 
@@ -48,9 +50,12 @@ public class Producer {
         return "Bearer " + authTokenData + ',' + authTokenChecksum;
     }
 
-    private static void sendMessage(String logPrefix, Channel channel, String userId, String message) throws IOException {
-        channel.basicPublish(EXCHANGE_NAME, userId, null, message.getBytes());
-        System.out.println(String.format("%s: Sent to %s@%s/%s: %s", logPrefix, userId, EXCHANGE_NAME, HOST, message));
+    private static void sendMessage(String logPrefix, Channel channel, List<String> consumerIds, String message) throws IOException {
+        for (String consumerId : consumerIds) {
+            channel.basicPublish(EXCHANGE_NAME, consumerId, null, message.getBytes());
+        }
+
+        System.out.println(String.format("%s: Sent to %s@%s/%s: %s", logPrefix, consumerIds, EXCHANGE_NAME, HOST, message));
         sleepSec();
     }
 

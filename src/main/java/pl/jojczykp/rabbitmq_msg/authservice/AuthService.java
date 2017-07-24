@@ -19,7 +19,7 @@ public class AuthService {
     private static final String EXCHANGE = "sample-exchange";
     private static final String VHOST = "/";
     private static final Set<String> PRODUCERS = ImmutableSet.of("producer1", "producer2");
-    private static final Set<String> CONSUMERS = ImmutableSet.of("consumer1", "consumer2");
+    private static final Set<String> CONSUMERS = ImmutableSet.of("consumer1", "consumer2", "consumer3");
 
     public static void main(String[] args) throws Exception {
         InetAddress localHost = Inet4Address.getLocalHost();
@@ -35,5 +35,4 @@ public class AuthService {
 
         server.start();
     }
-
 }
