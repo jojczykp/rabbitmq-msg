@@ -30,7 +30,7 @@ Other producers/consumers fail on access permissions.
 
 2. Start docker RabbitMQ and Auth Service images
 
-    `mvn docker:start`
+    `mvn docker:start -Ddocker.follow`
 
     To see admin console go to [http://localhost:15672/#/queues](http://localhost:15672/#/queues) (admin/admin)
 
@@ -83,7 +83,3 @@ Other producers/consumers fail on access permissions.
 
             `node consumer.js consumer4`
 
-
-5. Stop docker RabbitMQ image
-
-    `mvn docker:stop`
