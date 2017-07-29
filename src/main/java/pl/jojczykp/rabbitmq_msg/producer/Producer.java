@@ -6,6 +6,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -27,26 +28,49 @@ public class Producer {
         int instanceId = new Random().nextInt(1000) + 20000;
         List<String> consumerIds = Arrays.asList(args).subList(1, args.length);
 
+
+        try {
+            while (true) {
+                Connection connection = makeConnection(producerId, instanceId);
+                Channel channel = connection.createChannel();
+                channel.exchangeDeclare(EXCHANGE_NAME, "direct", true);
+
+                System.out.println(String.format("%s.%s: Connected. Sending messages to %s@%s/%s. To exit press CTRL+C",
+                        producerId, instanceId, consumerIds, EXCHANGE_NAME, HOST));
+
+                keepSending(producerId, instanceId, consumerIds, channel);
+
+                System.out.println("Connection closed");
+
+                close(connection, channel);
+            }
+        } catch (ConnectException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
+    }
+
+    private static Connection makeConnection(String producerId, int instanceId) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
         factory.setUsername(createAuthToken(producerId, instanceId));
-        Connection connection = factory.newConnection();
-        Channel channel = connection.createChannel();
+        return factory.newConnection();
+    }
 
-        boolean durable = true;
-        channel.exchangeDeclare(EXCHANGE_NAME, "direct", durable);
-
-        System.out.println(String.format("%s.%s: Sending messages to %s@%s/%s. To exit press CTRL+C", producerId, instanceId, consumerIds, EXCHANGE_NAME, HOST));
-        registerToCloseOnExit(connection, channel);
-
+    private static void keepSending(String producerId, int instanceId, List<String> consumerIds, Channel channel) throws IOException {
         int i = 0;
         while (channel.isOpen()) {
-            sendMessage(producerId, instanceId, channel, consumerIds,
-                    String.format("Hello World %d from %s.%d!", ++i, producerId, instanceId));
+            sendMessage(producerId, instanceId, channel, consumerIds, ++i);
         }
+    }
 
-        System.out.println("Connection closed");
-        System.exit(0);
+    private static void close(Connection connection, Channel channel) throws IOException, TimeoutException {
+        if (channel.isOpen()) {
+            channel.close();
+        }
+        if (connection.isOpen()) {
+            connection.close();
+        }
     }
 
     private static String createAuthToken(String producerId, int instanceId) {
@@ -57,7 +81,9 @@ public class Producer {
         return instanceId + "," + base64Encode("Bearer " + authTokenData + ',' + authTokenChecksum);
     }
 
-    private static void sendMessage(String producerId, int instanceId, Channel channel, List<String> consumerIds, String message) throws IOException {
+    private static void sendMessage(String producerId, int instanceId, Channel channel, List<String> consumerIds, int i) throws IOException {
+        String message = String.format("Hello World %d from %s.%d!", i, producerId, instanceId);
+
         for (String consumerId : consumerIds) {
             try {
                 channel.basicPublish(EXCHANGE_NAME, consumerId, null, message.getBytes());
@@ -80,20 +106,5 @@ public class Producer {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private static void registerToCloseOnExit(Connection connection, Channel channel) {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                if (channel.isOpen()) {
-                    channel.close();
-                }
-                if (connection.isOpen()) {
-                    connection.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }));
     }
 }
