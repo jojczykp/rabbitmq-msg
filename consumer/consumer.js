@@ -36,13 +36,14 @@ var initialConnect = true;
 connection.on('ready', function () {
     if (initialConnect) {
         initialConnect = false;
-        connection.queue(queueName, { exclusive: false, autoDelete: false }, function (q) {
+        connection.queue(queueName, { exclusive: false, autoDelete: false, durable: true }, function (q) {
             console.log('%s.%s: Waiting for messages to %s@%s/%s. To exit press CTRL+C', userId, instanceId, userId, exchangeName, host);
             q.bind(exchangeName, userId, function (q) {
                 console.log('%s.%s: Connection to %s@%s established', userId, instanceId, q.name, host);
             });
-            q.subscribe(function (msg) {
+            q.subscribe({ ack: true }, function (msg, headers, deliveryInfo, messageObject) {
                 console.log('%s.%s: Received on %s@%s/%s: %s', userId, instanceId, userId, exchangeName, host, msg.data.toString());
+                messageObject.acknowledge();
             });
         });
     }
