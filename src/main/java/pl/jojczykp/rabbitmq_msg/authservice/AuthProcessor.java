@@ -1,8 +1,6 @@
 package pl.jojczykp.rabbitmq_msg.authservice;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -17,7 +15,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.net.URLDecoder.decode;
@@ -31,9 +28,6 @@ class AuthProcessor implements HttpHandler {
 
     private static final String VHOST = "/";
     private static final String EXCHANGE_NAME = "sample.exchange";
-    private static final Set<String> CONSUMERS = ImmutableSet.of("consumer1", "consumer2", "consumer3");
-    private static final Set<String> PRODUCERS = ImmutableSet.of("producer1", "producer2");
-    private static final Sets.SetView<String> CONSUMERS_PRODUCERS = Sets.union(CONSUMERS, PRODUCERS);
 
     private static final Charset BODY_CHARSET = Charsets.ISO_8859_1;
 
@@ -102,12 +96,12 @@ class AuthProcessor implements HttpHandler {
             return false;
         }
 
-        String consumerId = authTokenData[0];
+        String userId = authTokenData[0];
         String tokenTimestampStr = authTokenData[1];
         Long tokenTimestamp = parseLongOrNull(tokenTimestampStr);
 
         if (tokenTimestamp == null || tokenTimestamp < System.currentTimeMillis()) {
-            System.out.println(String.format("%s.%s: Token expired", consumerId, instanceId));
+            System.out.println(String.format("%s.%s: Token expired", userId, instanceId));
             return false;
         }
 
@@ -115,49 +109,49 @@ class AuthProcessor implements HttpHandler {
 
         switch (entityType) {
             case "user":
-                return isProducerOrConsumerAllowed(consumerId);
+                return isUserAllowed(userId);
             case "vhost":
                 return isVhostAllowed(params.get("vhost"));
             case "resource":
-                return isResourceAllowed(consumerId, instanceId, params);
+                return isResourceAllowed(userId, instanceId, params);
             default:
                 return false;
         }
     }
 
-    private boolean isProducerOrConsumerAllowed(String consumerId) {
-        return CONSUMERS_PRODUCERS.contains(consumerId);
+    private boolean isUserAllowed(String id) {
+        return id.startsWith("producer") || id.startsWith("consumer");
     }
 
     private boolean isVhostAllowed(String vhost) {
         return VHOST.equals(vhost);
     }
 
-    private boolean isResourceAllowed(String consumerId, String instanceId, Map<String, String> params) {
+    private boolean isResourceAllowed(String userId, String instanceId, Map<String, String> params) {
         String type = params.get("resource");
         String name = params.get("name");
 
         switch (type) {
             case "exchange":
-                return isExchangeAllowed(consumerId, name, params.get("permission"));
+                return isExchangeAllowed(userId, name, params.get("permission"));
             case "queue":
-                return isQueueAllowed(consumerId, instanceId, name);
+                return isQueueAllowed(userId, instanceId, name);
             default:
                 return false;
         }
     }
 
-    private boolean isExchangeAllowed(String consumerId, String exchange, String permission) {
+    private boolean isExchangeAllowed(String userId, String exchange, String permission) {
         return EXCHANGE_NAME.equals(exchange) &&
-                (isProducerAllowed(consumerId, permission) || isProducerOrConsumerAllowed(consumerId, permission));
+                (isProducerAllowed(userId, permission) || isConsumerAllowed(userId, permission));
     }
 
-    private boolean isProducerAllowed(String consumerId, String permission) {
-        return PRODUCERS.contains(consumerId) && "write".equals(permission);
+    private boolean isProducerAllowed(String producerId, String permission) {
+        return producerId.startsWith("producer") && "write".equals(permission);
     }
 
-    private boolean isProducerOrConsumerAllowed(String consumerId, String permission) {
-        return CONSUMERS.contains(consumerId) && "read".equals(permission);
+    private boolean isConsumerAllowed(String consumerId, String permission) {
+        return consumerId.startsWith("consumer") && "read".equals(permission);
     }
 
     private boolean isQueueAllowed(String consumerId, String instanceId, String queueName) {
