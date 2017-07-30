@@ -18,7 +18,7 @@ var userId = args[0];
 var instanceId = args[1];
 var queueName = userId + '.' + instanceId;
 
-var timestampPeriodMillis = 15 * 60 * 1000;
+var timestampPeriodMillis = 60 * 1000;
 
 
 var connection = amqp.createConnection(
@@ -52,6 +52,7 @@ connection.on('ready', function () {
 
 connection.on('close', function () {
     connection.options.login = getUserDataStr();
+    console.log('Connection closed - reconnecting')
 });
 
 

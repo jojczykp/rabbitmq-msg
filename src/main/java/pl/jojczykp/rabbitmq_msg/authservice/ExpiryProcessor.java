@@ -1,30 +1,33 @@
 package pl.jojczykp.rabbitmq_msg.authservice;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
+import javax.json.Json;
+import javax.json.stream.JsonParser;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static javax.json.stream.JsonParser.Event.END_ARRAY;
+import static javax.json.stream.JsonParser.Event.END_OBJECT;
+
+
 class ExpiryProcessor {
 
-    private static final String RABBIT_HOST = "rabbitmq";
-    private static final int RABBIT_PORT = 15672;
-    private static final String RABBIT_USER = "admin";
-    private static final String RABBIT_PASSWORD = "admin";
+    private static final String MANAGEMENT_HOST = "rabbitmq";
+    private static final int MANAGEMENT_PORT = 15672;
+    private static final String MANAGEMENT_USER = "admin";
+    private static final String MANAGEMENT_PASSWORD = "admin";
 
-    private static final int CLIENT_CONNECTION_TIMEOUT_MS = 60 * 1000;
+    private static final int TIMESTAMPS_CHECK_PERIOD_MS = 10 * 1000;
 
-    // TODO - Use this to decide which connections must be closed
-    // TODO - Do check more frequently
     private final ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp;
 
     ExpiryProcessor(ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp) {
@@ -41,57 +44,54 @@ class ExpiryProcessor {
                     e.printStackTrace();
                 }
             }
-        }, CLIENT_CONNECTION_TIMEOUT_MS, CLIENT_CONNECTION_TIMEOUT_MS);
+        }, TIMESTAMPS_CHECK_PERIOD_MS, TIMESTAMPS_CHECK_PERIOD_MS);
     }
 
     private void closeExpiredConnections() throws IOException {
-        String connectionsJson = listConnections();
-        JSONArray connections = new JSONArray(connectionsJson);
+        int initialConnectionsNumber = instanceKeyToExpiryTimestamp.size();
 
-        for (Object connection : connections) {
-            closeConnectionIfApplicable((JSONObject) connection);
+        for (ClientConnection connection : getActiveConnections()) {
+            closeConnectionIfApplicable(connection);
         }
+
+        System.out.println(String.format("Attempted to close expired connections: was %d, left %d",
+                initialConnectionsNumber, instanceKeyToExpiryTimestamp.size()));
     }
 
-    private String listConnections() throws IOException {
-        HttpURLConnection httpConnection = makeRabbitHttpCall("GET", "?columns=name,user");
+    private Iterable<ClientConnection> getActiveConnections() throws IOException {
+        HttpURLConnection managementConnection = makeManagementCall("GET", "?columns=name,user");
 
-        if (httpConnection.getResponseCode() != 200) {
+        if (managementConnection.getResponseCode() != 200) {
             System.err.println(String.format("Wrong listing response code: %d [%s]",
-                    httpConnection.getResponseCode(), httpConnection.getResponseMessage()));
+                    managementConnection.getResponseCode(), managementConnection.getResponseMessage()));
         }
 
-        return getResponseBody(httpConnection);
+        InputStream is = managementConnection.getInputStream();
+        return () -> new ClientConnectionsIterator(is);
     }
 
-    private String getResponseBody(HttpURLConnection con) throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        StringBuilder response = new StringBuilder();
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
+    private void closeConnectionIfApplicable(ClientConnection clientConnection) throws IOException {
+        long currentTimestamp = System.currentTimeMillis();
+
+        Long expiryTimestamp = instanceKeyToExpiryTimestamp.get(clientConnection.user);
+        if (expiryTimestamp < currentTimestamp) {
+            String urlEncodedName = URLEncoder.encode(clientConnection.name, "UTF-8");
+            HttpURLConnection managementConnection = makeManagementCall("DELETE", "/" + urlEncodedName);
+            if (managementConnection.getResponseCode() == 204) {
+                instanceKeyToExpiryTimestamp.remove(clientConnection.user);
+            }
+
+            System.out.println(String.format("%s - %d [%s]",
+                    clientConnection.name, managementConnection.getResponseCode(), managementConnection.getResponseMessage()));
         }
-        in.close();
-
-        return response.toString();
     }
 
-    private void closeConnectionIfApplicable(JSONObject connection) throws IOException {
-        String name = connection.getString("name");
-        String urlEncodedName = URLEncoder.encode(name, "UTF-8");
-
-        HttpURLConnection httpConnection = makeRabbitHttpCall("DELETE", "/" + urlEncodedName);
-
-        System.out.println(String.format("%s - %d [%s]",
-                name, httpConnection.getResponseCode(), httpConnection.getResponseMessage()));
-    }
-
-    private HttpURLConnection makeRabbitHttpCall(String method, String suffix) throws IOException {
-        String connectionUrlStr = String.format("http://%s:%d/api/connections%s", RABBIT_HOST, RABBIT_PORT, suffix);
+    private HttpURLConnection makeManagementCall(String method, String suffix) throws IOException {
+        String connectionUrlStr = String.format("http://%s:%d/api/connections%s", MANAGEMENT_HOST, MANAGEMENT_PORT, suffix);
 
         URL connectionUrl = new URL(connectionUrlStr);
         HttpURLConnection httpConnection = (HttpURLConnection) connectionUrl.openConnection();
-        httpConnection.setRequestProperty("Authorization", "Basic " + base64Encode(RABBIT_USER + ":" + RABBIT_PASSWORD));
+        httpConnection.setRequestProperty("Authorization", "Basic " + base64Encode(MANAGEMENT_USER + ":" + MANAGEMENT_PASSWORD));
         httpConnection.setRequestMethod(method);
 
         return httpConnection;
@@ -100,4 +100,66 @@ class ExpiryProcessor {
     private String base64Encode(String string) {
         return new String(Base64.getEncoder().encode(string.getBytes()));
     }
+
+    private class ClientConnectionsIterator implements Iterator<ClientConnection> {
+        private final JsonParser parser;
+        private ClientConnection next;
+
+        ClientConnectionsIterator(InputStream inputStream) {
+            this.parser = Json.createParser(new BufferedReader(new InputStreamReader(inputStream)));
+            this.next = fetchNextOrNull();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        @Override
+        public ClientConnection next() {
+            ClientConnection oldNext = next;
+            next = fetchNextOrNull();
+
+            return oldNext;
+        }
+
+        private ClientConnection fetchNextOrNull() {
+            ClientConnection clientConnection = null;
+            JsonParser.Event next;
+
+            do {
+                next = parser.next();
+                switch (next) {
+                    case START_ARRAY:
+                        break;
+                    case START_OBJECT:
+                        clientConnection = new ClientConnection();
+                        break;
+                    case KEY_NAME:
+                        String key = parser.getString();
+                        parser.next();
+                        switch (key) {
+                            case "user":
+                                clientConnection.user = parser.getString();
+                                break;
+                            case "name":
+                                clientConnection.name = parser.getString();
+                                break;
+                        }
+                        break;
+                    case END_ARRAY:
+                        parser.close();
+                        break;
+                }
+            } while ((next != END_OBJECT) && (next != END_ARRAY));
+
+            return clientConnection;
+        }
+    }
+
+    private class ClientConnection {
+        String user;
+        String name;
+    }
+
 }
