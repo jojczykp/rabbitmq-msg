@@ -25,10 +25,10 @@ class ExpiryProcessor {
 
     // TODO - Use this to decide which connections must be closed
     // TODO - Do check more frequently
-    private final ConcurrentHashMap<String, Long> userInstanceKeyToExpiryTimestamp;
+    private final ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp;
 
-    ExpiryProcessor(ConcurrentHashMap<String, Long> userInstanceKeyToExpiryTimestamp) {
-        this.userInstanceKeyToExpiryTimestamp = userInstanceKeyToExpiryTimestamp;
+    ExpiryProcessor(ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp) {
+        this.instanceKeyToExpiryTimestamp = instanceKeyToExpiryTimestamp;
     }
 
     void start() {

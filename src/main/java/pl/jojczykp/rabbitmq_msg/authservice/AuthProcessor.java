@@ -37,10 +37,10 @@ class AuthProcessor implements HttpHandler {
 
     private static final Charset BODY_CHARSET = Charsets.ISO_8859_1;
 
-    private final ConcurrentHashMap<String, Long> consumerInstanceKeyToExpiryTimestamp;
+    private final ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp;
 
-    AuthProcessor(ConcurrentHashMap<String, Long> consumerInstanceKeyToExpiryTimestamp) {
-        this.consumerInstanceKeyToExpiryTimestamp = consumerInstanceKeyToExpiryTimestamp;
+    AuthProcessor(ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp) {
+        this.instanceKeyToExpiryTimestamp = instanceKeyToExpiryTimestamp;
     }
 
     void start() throws IOException {
@@ -93,7 +93,7 @@ class AuthProcessor implements HttpHandler {
             return false;
         }
 
-        consumerInstanceKeyToExpiryTimestamp.put(userDataStr, tokenTimestamp);
+        instanceKeyToExpiryTimestamp.put(userDataStr, tokenTimestamp);
 
         switch (entityType) {
             case "user":
