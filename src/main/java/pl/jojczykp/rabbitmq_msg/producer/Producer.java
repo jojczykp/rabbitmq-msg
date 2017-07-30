@@ -16,7 +16,7 @@ public class Producer {
 
     private static final String HOST = "localhost";
     private static final String EXCHANGE_NAME = "sample-exchange";
-    private static final long AUTH_TOKEN_PERIOD_MILLIS = 5 * 60 * 1000;
+    private static final long AUTH_TOKEN_PERIOD_MILLIS = /*5 **/ 60 * 1000;
 
     public static void main(String[] args) throws IOException, TimeoutException {
         if (args.length < 2) {
@@ -28,22 +28,24 @@ public class Producer {
         int instanceId = new Random().nextInt(1000) + 20000;
         List<String> consumerIds = Arrays.asList(args).subList(1, args.length);
 
-        try {
-            Channel channel = connect(producerId, instanceId, consumerIds);
-
-            int i = 0;
-            while (true) {
-                try {
-                    broadcastMessage(producerId, instanceId, consumerIds, channel, i);
-                    sleepSec();
-                    i++;
-                } catch (AlreadyClosedException e) {
-                    System.err.println(String.format("%s.%s: Connection closed - reconnecting", producerId, instanceId));
+        int i = 0;
+        Channel channel = null;
+        while (true) {
+            try {
+                if (channel == null) {
                     channel = connect(producerId, instanceId, consumerIds);
                 }
+                broadcastMessage(producerId, instanceId, consumerIds, channel, i);
+                i++;
+            } catch (Exception e) {
+                System.out.println(String.format("%s.%s: Connection closed - reconnecting", producerId, instanceId));
+                if (channel != null) {
+                    channel.abort();
+                    channel = null;
+                }
             }
-        } catch (ConnectException e) {
-            System.out.println(String.format("%s.%s: Connection closed", producerId, instanceId));
+
+            sleepSec();
         }
     }
 
