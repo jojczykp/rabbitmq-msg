@@ -64,9 +64,14 @@ function getUserDataStr() {
 function getAuthToken() {
     var authTokenExpiryTimestamp = Date.now() + authTokenPeriodMillis;
     var authTokenData = userId + ',' + authTokenExpiryTimestamp;
-    var authTokenChecksum = 123;
+    var authTokenChecksum = checksum(authTokenData);
 
     return base64Encode('Bearer ' + authTokenData + ',' + authTokenChecksum);
+}
+
+
+function checksum(data) { // fake :)
+    return data.length;
 }
 
 

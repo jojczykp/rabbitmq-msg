@@ -82,13 +82,31 @@ class AuthProcessor implements HttpHandler {
         String userDataStr = params.get("username");
         String[] userData = userDataStr.split(",", 2);
         String instanceId = userData[0];
-        String authToken = base64Decode(userData[1]);
-        String authTokenDataStr = authToken.split(" ")[1];
-        String[] authTokenData = authTokenDataStr.split(",");
-        String consumerId = authTokenData[0];
-        long tokenTimestamp = Long.valueOf(authTokenData[1]);
+        String authTokenStr = base64Decode(userData[1]);
+        String[] authToken = authTokenStr.split(" ");
+        String authTokenMethod = authToken[0];
 
-        if (tokenTimestamp < System.currentTimeMillis()) {
+        if (!"Bearer".equals(authTokenMethod)) {
+            System.out.println(String.format("%s: Wrong Auth Method: %s", authTokenStr, authTokenMethod));
+            return false;
+        }
+
+        String authTokenDataStr = authToken[1];
+        String[] authTokenData = authTokenDataStr.split(",");
+
+        String actualChecksumStr = authTokenData[2];
+        Long actualChecksum = parseLongOrNull(actualChecksumStr);
+
+        if (actualChecksum == null || actualChecksum != checksum(substringBeforeLast(authTokenDataStr, ','))) {
+            System.out.println(String.format("%s: Wrong Auth Checksum: %s", authTokenStr, actualChecksumStr));
+            return false;
+        }
+
+        String consumerId = authTokenData[0];
+        String tokenTimestampStr = authTokenData[1];
+        Long tokenTimestamp = parseLongOrNull(tokenTimestampStr);
+
+        if (tokenTimestamp == null || tokenTimestamp < System.currentTimeMillis()) {
             System.out.println(String.format("%s.%s: Token expired", consumerId, instanceId));
             return false;
         }
@@ -174,8 +192,25 @@ class AuthProcessor implements HttpHandler {
         return str.substring(i + 1);
     }
 
+    private static String substringBeforeLast(String str, char ch) {
+        int i = str.lastIndexOf(ch);
+        return str.substring(0, i);
+    }
+
     private static String base64Decode(String data) { // fake - remove leading '[' and tailing ']' :)
         return data.substring(1, data.length() - 1);
+    }
+
+    private long checksum(String data) {
+        return data.length();
+    }
+
+    private Long parseLongOrNull(String tokenTimestampStr) {
+        try {
+            return Long.valueOf(tokenTimestampStr);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
 
