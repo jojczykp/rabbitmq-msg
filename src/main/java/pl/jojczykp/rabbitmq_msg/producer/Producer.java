@@ -28,49 +28,49 @@ public class Producer {
         int instanceId = new Random().nextInt(1000) + 20000;
         List<String> consumerIds = Arrays.asList(args).subList(1, args.length);
 
-
         try {
+            Channel channel = connect(producerId, instanceId, consumerIds);
+
+            int i = 0;
             while (true) {
-                Connection connection = makeConnection(producerId, instanceId);
-                Channel channel = connection.createChannel();
-                channel.exchangeDeclare(EXCHANGE_NAME, "direct", true);
-
-                System.out.println(String.format("%s.%s: Connected. Sending messages to %s@%s/%s. To exit press CTRL+C",
-                        producerId, instanceId, consumerIds, EXCHANGE_NAME, HOST));
-
-                keepSending(producerId, instanceId, consumerIds, channel);
-
-                System.out.println("Connection closed");
-
-                close(connection, channel);
+                try {
+                    broadcastMessage(producerId, instanceId, consumerIds, channel, i);
+                    sleepSec();
+                    i++;
+                } catch (AlreadyClosedException e) {
+                    System.err.println(String.format("%s.%s: Connection closed - reconnecting", producerId, instanceId));
+                    channel = connect(producerId, instanceId, consumerIds);
+                }
             }
         } catch (ConnectException e) {
-            System.out.println(e.getMessage());
-            System.exit(1);
+            System.out.println(String.format("%s.%s: Connection closed", producerId, instanceId));
         }
     }
 
-    private static Connection makeConnection(String producerId, int instanceId) throws IOException, TimeoutException {
+    private static Channel connect(String producerId, int instanceId, List<String> consumerIds) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
         factory.setUsername(createAuthToken(producerId, instanceId));
-        return factory.newConnection();
+        factory.setPassword("");
+        factory.setAutomaticRecoveryEnabled(false);
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+        channel.exchangeDeclarePassive(EXCHANGE_NAME);
+
+        System.out.println(String.format("%s.%s: Connected. Sending messages to %s@%s/%s. To exit press CTRL+C",
+                producerId, instanceId, consumerIds, EXCHANGE_NAME, HOST));
+
+        return channel;
     }
 
-    private static void keepSending(String producerId, int instanceId, List<String> consumerIds, Channel channel) throws IOException {
-        int i = 0;
-        while (channel.isOpen()) {
-            sendMessage(producerId, instanceId, channel, consumerIds, ++i);
-        }
-    }
+    private static void broadcastMessage(String producerId, int instanceId, List<String> consumerIds, Channel channel, int i) throws IOException {
+        String message = String.format("Hello World %d from %s.%d!", i, producerId, instanceId);
 
-    private static void close(Connection connection, Channel channel) throws IOException, TimeoutException {
-        if (channel.isOpen()) {
-            channel.close();
+        for (String consumerId : consumerIds) {
+            channel.basicPublish(EXCHANGE_NAME, consumerId, null, message.getBytes());
         }
-        if (connection.isOpen()) {
-            connection.close();
-        }
+
+        System.out.println(String.format("%s.%d: Sent to %s@%s/%s: %s", producerId, instanceId, consumerIds, EXCHANGE_NAME, HOST, message));
     }
 
     private static String createAuthToken(String producerId, int instanceId) {
@@ -79,21 +79,6 @@ public class Producer {
         long authTokenChecksum = 123;
 
         return instanceId + "," + base64Encode("Bearer " + authTokenData + ',' + authTokenChecksum);
-    }
-
-    private static void sendMessage(String producerId, int instanceId, Channel channel, List<String> consumerIds, int i) throws IOException {
-        String message = String.format("Hello World %d from %s.%d!", i, producerId, instanceId);
-
-        for (String consumerId : consumerIds) {
-            try {
-                channel.basicPublish(EXCHANGE_NAME, consumerId, null, message.getBytes());
-            } catch (AlreadyClosedException e) {
-                System.err.println("Channel closed by server");
-            }
-        }
-
-        System.out.println(String.format("%s.%d: Sent to %s@%s/%s: %s", producerId, instanceId, consumerIds, EXCHANGE_NAME, HOST, message));
-        sleepSec();
     }
 
     private static String base64Encode(String data) { // fake - remove leading '[' and tailing ']' :)

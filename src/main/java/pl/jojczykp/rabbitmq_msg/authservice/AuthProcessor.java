@@ -135,13 +135,11 @@ class AuthProcessor implements HttpHandler {
     }
 
     private boolean isProducerAllowed(String consumerId, String permission) {
-        return PRODUCERS.contains(consumerId) &&
-               ImmutableSet.of("write", "configure").contains(permission);
+        return PRODUCERS.contains(consumerId) && "write".equals(permission);
     }
 
     private boolean isProducerOrConsumerAllowed(String consumerId, String permission) {
-        return CONSUMERS.contains(consumerId) &&
-               ImmutableSet.of("read").contains(permission);
+        return CONSUMERS.contains(consumerId) && "read".equals(permission);
     }
 
     private boolean isQueueAllowed(String consumerId, String instanceId, String queueName) {

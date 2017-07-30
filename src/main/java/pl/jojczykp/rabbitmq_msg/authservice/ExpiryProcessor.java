@@ -54,7 +54,7 @@ class ExpiryProcessor {
     }
 
     private String listConnections() throws IOException {
-        HttpURLConnection httpConnection = makeHttpConnection("GET", "?columns=name,user");
+        HttpURLConnection httpConnection = makeRabbitHttpCall("GET", "?columns=name,user");
 
         if (httpConnection.getResponseCode() != 200) {
             System.err.println(String.format("Wrong listing response code: %d [%s]",
@@ -80,13 +80,13 @@ class ExpiryProcessor {
         String name = connection.getString("name");
         String urlEncodedName = URLEncoder.encode(name, "UTF-8");
 
-        HttpURLConnection httpConnection = makeHttpConnection("DELETE", "/" + urlEncodedName);
+        HttpURLConnection httpConnection = makeRabbitHttpCall("DELETE", "/" + urlEncodedName);
 
         System.out.println(String.format("%s - %d [%s]",
                 name, httpConnection.getResponseCode(), httpConnection.getResponseMessage()));
     }
 
-    private HttpURLConnection makeHttpConnection(String method, String suffix) throws IOException {
+    private HttpURLConnection makeRabbitHttpCall(String method, String suffix) throws IOException {
         String connectionUrlStr = String.format("http://%s:%d/api/connections%s", RABBIT_HOST, RABBIT_PORT, suffix);
 
         URL connectionUrl = new URL(connectionUrlStr);
