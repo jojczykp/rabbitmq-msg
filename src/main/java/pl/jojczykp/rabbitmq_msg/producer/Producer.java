@@ -16,7 +16,7 @@ public class Producer {
 
     private static final String HOST = "localhost";
     private static final String EXCHANGE_NAME = "sample-exchange";
-    private static final long TIMESTAMP_PERIOD_MILLIS = 5 * 60 * 1000;
+    private static final long AUTH_TOKEN_PERIOD_MILLIS = 5 * 60 * 1000;
 
     public static void main(String[] args) throws IOException, TimeoutException {
         if (args.length < 2) {
@@ -74,7 +74,7 @@ public class Producer {
     }
 
     private static String createAuthToken(String producerId, int instanceId) {
-        long authTokenExpiryTimestamp = System.currentTimeMillis() + TIMESTAMP_PERIOD_MILLIS;
+        long authTokenExpiryTimestamp = System.currentTimeMillis() + AUTH_TOKEN_PERIOD_MILLIS;
         String authTokenData = producerId + ',' + authTokenExpiryTimestamp;
         long authTokenChecksum = 123;
 

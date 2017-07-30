@@ -11,6 +11,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +27,7 @@ class ExpiryProcessor {
     private static final String MANAGEMENT_USER = "admin";
     private static final String MANAGEMENT_PASSWORD = "admin";
 
-    private static final int TIMESTAMPS_CHECK_PERIOD_MS = 10 * 1000;
+    private static final int TIMESTAMPS_CHECK_PERIOD_MILLIS = 10 * 1000;
 
     private final ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp;
 
@@ -44,18 +45,23 @@ class ExpiryProcessor {
                     e.printStackTrace();
                 }
             }
-        }, TIMESTAMPS_CHECK_PERIOD_MS, TIMESTAMPS_CHECK_PERIOD_MS);
+        }, TIMESTAMPS_CHECK_PERIOD_MILLIS, TIMESTAMPS_CHECK_PERIOD_MILLIS);
     }
 
     private void closeExpiredConnections() throws IOException {
-        int initialConnectionsNumber = instanceKeyToExpiryTimestamp.size();
+        long currentTimestamp = System.currentTimeMillis();
+
+        int before = instanceKeyToExpiryTimestamp.size();
 
         for (ClientConnection connection : getActiveConnections()) {
-            closeConnectionIfApplicable(connection);
+            closeConnectionIfExpired(connection, currentTimestamp);
         }
 
-        System.out.println(String.format("Attempted to close expired connections: was %d, left %d",
-                initialConnectionsNumber, instanceKeyToExpiryTimestamp.size()));
+        removeExpiredEntries(currentTimestamp);
+
+        int after = instanceKeyToExpiryTimestamp.size();
+
+        System.out.println(String.format("Attempted to close expired connections: was %d, left %d", before, after));
     }
 
     private Iterable<ClientConnection> getActiveConnections() throws IOException {
@@ -70,19 +76,31 @@ class ExpiryProcessor {
         return () -> new ClientConnectionsIterator(is);
     }
 
-    private void closeConnectionIfApplicable(ClientConnection clientConnection) throws IOException {
-        long currentTimestamp = System.currentTimeMillis();
-
-        Long expiryTimestamp = instanceKeyToExpiryTimestamp.get(clientConnection.user);
-        if (expiryTimestamp < currentTimestamp) {
+    private void closeConnectionIfExpired(ClientConnection clientConnection, long currentTimestamp) throws IOException {
+        if (isUnknown(clientConnection) || isExpired(clientConnection, currentTimestamp)) {
             String urlEncodedName = URLEncoder.encode(clientConnection.name, "UTF-8");
             HttpURLConnection managementConnection = makeManagementCall("DELETE", "/" + urlEncodedName);
-            if (managementConnection.getResponseCode() == 204) {
-                instanceKeyToExpiryTimestamp.remove(clientConnection.user);
-            }
 
             System.out.println(String.format("%s - %d [%s]",
                     clientConnection.name, managementConnection.getResponseCode(), managementConnection.getResponseMessage()));
+        }
+    }
+
+    private boolean isUnknown(ClientConnection clientConnection) {
+        return !instanceKeyToExpiryTimestamp.containsKey(clientConnection.user);
+    }
+
+    private boolean isExpired(ClientConnection clientConnection, long currentTimestamp) {
+        return instanceKeyToExpiryTimestamp.get(clientConnection.user) < currentTimestamp;
+    }
+
+    private void removeExpiredEntries(long currentTimestamp) {
+        for (Map.Entry<String, Long> entry : instanceKeyToExpiryTimestamp.entrySet()) {
+            Long entryTimestamp = entry.getValue();
+            if (entryTimestamp < currentTimestamp) {
+                System.out.println("Removing expired entry: " + entry.getKey());
+                instanceKeyToExpiryTimestamp.remove(entry.getKey());
+            }
         }
     }
 

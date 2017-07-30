@@ -18,7 +18,7 @@ var userId = args[0];
 var instanceId = args[1];
 var queueName = userId + '.' + instanceId;
 
-var timestampPeriodMillis = 60 * 1000;
+var authTokenPeriodMillis = 60 * 1000;
 
 
 var connection = amqp.createConnection(
@@ -52,7 +52,7 @@ connection.on('ready', function () {
 
 connection.on('close', function () {
     connection.options.login = getUserDataStr();
-    console.log('Connection closed - reconnecting')
+    console.log('%s.%s: Connection closed - reconnecting', userId, instanceId)
 });
 
 
@@ -62,7 +62,7 @@ function getUserDataStr() {
 
 
 function getAuthToken() {
-    var authTokenExpiryTimestamp = Date.now() + timestampPeriodMillis;
+    var authTokenExpiryTimestamp = Date.now() + authTokenPeriodMillis;
     var authTokenData = userId + ',' + authTokenExpiryTimestamp;
     var authTokenChecksum = 123;
 
