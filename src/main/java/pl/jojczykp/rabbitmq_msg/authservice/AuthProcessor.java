@@ -30,7 +30,7 @@ class AuthProcessor implements HttpHandler {
     private static final String LISTEN_URL_PREFIX = "/auth/";
 
     private static final String VHOST = "/";
-    private static final String EXCHANGE = "sample-exchange";
+    private static final String EXCHANGE_NAME = "sample.exchange";
     private static final Set<String> CONSUMERS = ImmutableSet.of("consumer1", "consumer2", "consumer3");
     private static final Set<String> PRODUCERS = ImmutableSet.of("producer1", "producer2");
     private static final Sets.SetView<String> CONSUMERS_PRODUCERS = Sets.union(CONSUMERS, PRODUCERS);
@@ -130,7 +130,7 @@ class AuthProcessor implements HttpHandler {
     }
 
     private boolean isExchangeAllowed(String consumerId, String exchange, String permission) {
-        return EXCHANGE.equals(exchange) &&
+        return EXCHANGE_NAME.equals(exchange) &&
                 (isProducerAllowed(consumerId, permission) || isProducerOrConsumerAllowed(consumerId, permission));
     }
 

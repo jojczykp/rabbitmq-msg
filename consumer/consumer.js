@@ -13,7 +13,7 @@ if (args.length != 2) {
 
 var host = 'localhost';
 var port = 5672;
-var exchangeName = 'sample-exchange';
+var exchangeName = 'sample.exchange';
 var userId = args[0];
 var instanceId = args[1];
 var queueName = userId + '.' + instanceId;
