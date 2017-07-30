@@ -110,6 +110,9 @@ class ExpiryProcessor {
         URL connectionUrl = new URL(connectionUrlStr);
         HttpURLConnection httpConnection = (HttpURLConnection) connectionUrl.openConnection();
         httpConnection.setRequestProperty("Authorization", "Basic " + base64Encode(MANAGEMENT_USER + ":" + MANAGEMENT_PASSWORD));
+        if ("DELETE".equals(method)) {
+            httpConnection.setRequestProperty("X-Reason", "Authentication Token Expired");
+        }
         httpConnection.setRequestMethod(method);
 
         return httpConnection;
