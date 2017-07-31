@@ -4,7 +4,7 @@ Pet project for playing with RabbitMQ.
 
 https://www.rabbitmq.com/
 
-Demonstrates usage of a single exchange to deliver messages from multiple producers to multiple consumers, for two different producer/consumer sets (user1, user2), using _routingKey_.
+Demonstrates usage of a single exchange to deliver messages from multiple producers to multiple consumers, for two different producer/consumer sets (consumer1, consumer2), using _routingKey_.
 
 Host (_localhost_) and exchange name hardcoded in _.java_ and _.js_ files. 
 
@@ -15,8 +15,8 @@ Queue parameters (i.e. expiry time) defined on server (see _rabbit_definitions.j
 * Consumer - Node.js
 
 Hardcoded 'allow' credentials for:
-* producer1, producer2
-* consumer1, consumer2, consumer3
+* producers: _producer*_
+* consumers: _consumer*_
 
 Other producers/consumers fail on access permissions.
 
@@ -49,9 +49,9 @@ Other producers/consumers fail on access permissions.
     
         `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.producer.Producer producer2 consumer1`
 
-    3. Failing on access denied (only producer{1,2} have permission):
+    3. Failing on access denied:
 
-        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.producer.Producer producer3 consumer1`
+        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.producer.Producer abcd consumer1`
         
 4. Consumers (in `consumer` folder)
 
@@ -79,7 +79,7 @@ Other producers/consumers fail on access permissions.
 
             `node consumer.js consumer3`
 
-        4. Failing with access denied (only consumer{1,2,3} have permission):
+        4. Failing with access denied:
 
-            `node consumer.js consumer4`
+            `node consumer.js abcd`
 
