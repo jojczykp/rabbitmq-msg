@@ -13,8 +13,9 @@ import java.util.concurrent.TimeoutException;
 public class Producer {
 
     private static final String HOST = "localhost";
+    private static final int PORT = 5672;
     private static final String EXCHANGE_NAME = "sample.exchange";
-    private static final long AUTH_TOKEN_PERIOD_MILLIS = 5 * 60 * 1000;
+    private static final long AUTH_TOKEN_PERIOD_MILLIS = 60 * 1000;
 
     public static void main(String[] args) throws IOException, TimeoutException {
         if (args.length < 2) {
@@ -50,6 +51,7 @@ public class Producer {
     private static Channel connect(String producerId, int instanceId, List<String> consumerIds) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
+        factory.setPort(PORT);
         factory.setUsername(createAuthToken(producerId, instanceId));
         factory.setPassword("");
         factory.setAutomaticRecoveryEnabled(false);
