@@ -1,8 +1,11 @@
-#!/usr/bin/env node
+#!/usr/bin/node
 
 'use strict;'
 
-var amqp = require('amqp'); //https://github.com/postwait/node-amqp
+// https://github.com/mqttjs/MQTT.js
+// https://www.npmjs.com/package/mqtt
+
+var mqtt = require('mqtt');
 
 
 var args = process.argv.slice(2);
@@ -12,48 +15,60 @@ if (args.length != 2) {
 }
 
 var host = 'localhost';
-var port = 5672;
-var exchangeName = 'sample.exchange';
+var port = 15675;
 var userId = args[0];
 var instanceId = args[1];
-var queueName = userId + '.' + instanceId;
 
 var authTokenPeriodMillis = 60 * 1000;
 
+var url  = 'ws://' + host + ':' + port + '/ws';
 
-var connection = amqp.createConnection(
-{
-    host: host,
-    port: port,
-    login: getUserDataStr(),
-    password: ''
-}, {
-    reconnect: true
+
+var client = mqtt.connect(url, {
+    username: getUserDataStr(),
+    password: '[ignored]',
+    clientId: userId + '-' + instanceId + '-',
+    reconnectPeriod: 1000, // ms
+    clean: false // no immediate auto-delete queue
 });
 
 
-var initialConnect = true;
-connection.on('ready', function () {
-    if (initialConnect) {
-        initialConnect = false;
-        connection.queue(queueName, { exclusive: false, autoDelete: false, durable: true }, function (q) {
-            console.log('%s.%s: Waiting for messages to %s@%s/%s. To exit press CTRL+C', userId, instanceId, userId, exchangeName, host);
-            q.bind(exchangeName, userId, function (q) {
-                console.log('%s.%s: Connection to %s@%s established', userId, instanceId, q.name, host);
-            });
-            q.subscribe({ ack: true }, function (msg, headers, deliveryInfo, messageObject) {
-                console.log('%s.%s: Received on %s@%s/%s: %s', userId, instanceId, userId, exchangeName, host, msg.data.toString());
-                messageObject.acknowledge();
-            });
-        });
-    }
+client.on('connect', function () {
+    console.log('Connected');
+    client.subscribe(userId, { qos: 1 });
+    console.log('Subscribed');
 });
 
 
-connection.on('close', function () {
-    connection.options.login = getUserDataStr();
-    console.log('%s.%s: Connection closed - reconnecting', userId, instanceId)
+client.on('reconnect', function () {
+    console.log('Reconnected - Refreshing Access Token');
+    client.options.username = getUserDataStr();
 });
+
+
+client.on('close', function () {
+    console.log('Disconnected');
+});
+
+
+client.on('offline', function () {
+    console.log('Offline');
+});
+
+
+client.on('message', function (topic, message, packet) {
+    console.log('Received message: ' + message.toString());
+});
+
+
+client.on('error', function (error) {
+    console.log('Error: ' + error);
+});
+
+
+//client.on('packetreceive', function (packet) {
+//    console.log('Received: ' + packet);
+//});
 
 
 function getUserDataStr() {

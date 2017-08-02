@@ -97,11 +97,12 @@
                             <run>
                                 <network>
                                     <mode>custom</mode>
-                                    <name>aws</name>
+                                    <name>rabbitmq-test</name>
                                     <alias>rabbitmq</alias>
                                 </network>
                                 <ports>
-                                    <port>5672:5672/tcp</port>   <!-- RabbitMQ -->
+                                    <port>5672:5672/tcp</port>   <!-- RabbitMQ AMQP    - backend producers -->
+                                    <port>15675:15675/tcp</port> <!-- RabbitMQ MQTT/WS - web consumers -->
                                     <port>15672:15672/tcp</port> <!-- RabbitMQ Manager -->
                                 </ports>
                                 <volumes>
@@ -114,6 +115,7 @@
                                     <tcp>
                                         <ports>
                                             <port>5672</port>
+                                            <port>15675</port>
                                             <port>15672</port>
                                         </ports>
                                     </tcp>
@@ -134,7 +136,7 @@
                             <run>
                                 <network>
                                     <mode>custom</mode>
-                                    <name>aws</name>
+                                    <name>rabbitmq-test</name>
                                     <alias>auth-service</alias>
                                 </network>
                                 <volumes>
@@ -142,7 +144,7 @@
                                         <volume>${project.basedir}/target:/target:ro,Z</volume>
                                     </bind>
                                 </volumes>
-                                <cmd>java -cp /target/${project.build.finalName}.jar pl.jojczykp.rabbitmq_msg.authservice.AuthService</cmd>
+                                <cmd>java -cp /target/${project.build.finalName}.jar pl.jojczykp.rabbitmq_msg.AuthService</cmd>
                                 <log>
                                     <color>blue</color>
                                     <prefix>AuthService</prefix>

@@ -1,4 +1,4 @@
-package pl.jojczykp.rabbitmq_msg.authservice;
+package pl.jojczykp.rabbitmq_msg;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -15,26 +15,23 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.net.URLDecoder.decode;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toMap;
 
-class AuthProcessor implements HttpHandler {
+class AuthService implements HttpHandler {
 
     private static final int LISTEN_PORT = 8000;
     private static final String LISTEN_URL_PREFIX = "/auth/";
 
     private static final String VHOST = "/";
-    private static final String EXCHANGE_NAME = "sample.exchange";
+    private static final String EXCHANGE_NAME = "amq.topic";
 
     private static final Charset BODY_CHARSET = Charsets.ISO_8859_1;
 
-    private final ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp;
-
-    AuthProcessor(ConcurrentHashMap<String, Long> instanceKeyToExpiryTimestamp) {
-        this.instanceKeyToExpiryTimestamp = instanceKeyToExpiryTimestamp;
+    public static void main(String[] args) throws IOException {
+        new AuthService().start();
     }
 
     void start() throws IOException {
@@ -75,6 +72,12 @@ class AuthProcessor implements HttpHandler {
     private boolean handle(String entityType, Map<String, String> params) {
         String userDataStr = params.get("username");
         String[] userData = userDataStr.split(",", 2);
+
+        if (userData.length < 2) {
+            System.out.println(String.format("Wrong User Data: %s", userDataStr));
+            return false;
+        }
+
         String instanceId = userData[0];
         String authTokenStr = base64Decode(userData[1]);
         String[] authToken = authTokenStr.split(" ");
@@ -87,6 +90,11 @@ class AuthProcessor implements HttpHandler {
 
         String authTokenDataStr = authToken[1];
         String[] authTokenData = authTokenDataStr.split(",");
+
+        if (authTokenData.length < 3) {
+            System.out.println(String.format("%s: Wrong Auth Token: %s", authTokenStr, authTokenDataStr));
+            return false;
+        }
 
         String actualChecksumStr = authTokenData[2];
         Long actualChecksum = parseLongOrNull(actualChecksumStr);
@@ -104,8 +112,6 @@ class AuthProcessor implements HttpHandler {
             System.out.println(String.format("%s.%s: Token expired", userId, instanceId));
             return false;
         }
-
-        instanceKeyToExpiryTimestamp.put(userDataStr, tokenTimestamp);
 
         switch (entityType) {
             case "user":
@@ -134,6 +140,8 @@ class AuthProcessor implements HttpHandler {
         switch (type) {
             case "exchange":
                 return isExchangeAllowed(userId, name, params.get("permission"));
+            case "topic":
+            return isTopicAllowed(userId, name, params.get("permission"));
             case "queue":
                 return isQueueAllowed(userId, instanceId, name);
             default:
@@ -141,9 +149,13 @@ class AuthProcessor implements HttpHandler {
         }
     }
 
-    private boolean isExchangeAllowed(String userId, String exchange, String permission) {
-        return EXCHANGE_NAME.equals(exchange) &&
+    private boolean isExchangeAllowed(String userId, String name, String permission) {
+        return EXCHANGE_NAME.equals(name) &&
                 (isProducerAllowed(userId, permission) || isConsumerAllowed(userId, permission));
+    }
+
+    private boolean isTopicAllowed(String userId, String name, String permission) {
+        return userId.equals(name) && "read".equals(permission);
     }
 
     private boolean isProducerAllowed(String producerId, String permission) {
@@ -155,7 +167,7 @@ class AuthProcessor implements HttpHandler {
     }
 
     private boolean isQueueAllowed(String consumerId, String instanceId, String queueName) {
-        String allowedQueueName = consumerId + "." + instanceId;
+        String allowedQueueName = "mqtt-subscription-" + consumerId + "-" + instanceId + "-qos1";
         return allowedQueueName.equals(queueName);
     }
 

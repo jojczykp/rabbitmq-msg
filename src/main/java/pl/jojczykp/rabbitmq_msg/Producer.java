@@ -1,4 +1,4 @@
-package pl.jojczykp.rabbitmq_msg.producer;
+package pl.jojczykp.rabbitmq_msg;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -14,7 +14,7 @@ public class Producer {
 
     private static final String HOST = "localhost";
     private static final int PORT = 5672;
-    private static final String EXCHANGE_NAME = "sample.exchange";
+    private static final String EXCHANGE_NAME = "amq.topic";
     private static final long AUTH_TOKEN_PERIOD_MILLIS = 60 * 1000;
 
     public static void main(String[] args) throws IOException, TimeoutException {

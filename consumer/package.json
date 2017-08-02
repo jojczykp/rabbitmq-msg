@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/jojczykp/rabbitmq-msg#readme",
   "dependencies": {
-    "amqp": "^0.2.6"
+    "mqtt": "^2.10.0"
   }
 }
