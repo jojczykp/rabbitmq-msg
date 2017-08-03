@@ -14,7 +14,7 @@ public class Producer {
 
     private static final String HOST = "localhost";
     private static final int PORT = 5672;
-    private static final String EXCHANGE_NAME = "amq.topic";
+    private static final String EXCHANGE_NAME = "mqtt.direct";
     private static final long AUTH_TOKEN_PERIOD_MILLIS = 60 * 1000;
 
     public static void main(String[] args) throws IOException, TimeoutException {
@@ -44,7 +44,7 @@ public class Producer {
                 }
             }
 
-            sleepSec();
+            sleepSecs(1);
         }
     }
 
@@ -91,9 +91,9 @@ public class Producer {
         return "[" + data + "]";
     }
 
-    private static void sleepSec() {
+    private static void sleepSecs(int n) {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(n * 1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

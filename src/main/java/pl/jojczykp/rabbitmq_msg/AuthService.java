@@ -26,7 +26,7 @@ class AuthService implements HttpHandler {
     private static final String LISTEN_URL_PREFIX = "/auth/";
 
     private static final String VHOST = "/";
-    private static final String EXCHANGE_NAME = "amq.topic";
+    private static final String EXCHANGE_NAME = "mqtt.direct";
 
     private static final Charset BODY_CHARSET = Charsets.ISO_8859_1;
 
