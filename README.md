@@ -63,23 +63,19 @@ Other producers/consumers fail on access permissions.
 
     2. Run (each command in separate console)
 
-        1. Consuming from both producers:
+        1. Consuming from both producers (2 instances):
     
-            `node consumer.js consumer1`
+            `node consumersMqttWs.js consumer1 1 2`
     
-            `node consumer.js consumer1`
+        2. Consuming from producer1 only (since producer2 does not send to consumer2, 2 instances):
 
-        2. Consuming from producer1 only (since producer2 does not send to consumer2):
-
-            `node consumer.js consumer2`
+            `node consumersMqttWs.js consumer2 1 2`
     
-            `node consumer.js consumer2`
-
         3. Not consuming at all (no producer sending to consumer3):
 
-            `node consumer.js consumer3`
+            `node consumersMqttWs.js consumer3`
 
         4. Failing with access denied:
 
-            `node consumer.js abcd`
+            `node consumersMqttWs.js abcd`
 
