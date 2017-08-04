@@ -28,7 +28,7 @@ console.log('initialInstanceId: ' + initialInstanceId);
 console.log('numberOfInstances: ' + numberOfInstances);
 
 
-for (i = initialInstanceId; i <= initialInstanceId + numberOfInstances; i++) {
+for (i = initialInstanceId; i < initialInstanceId + numberOfInstances; i++) {
     startInstance(i);
 }
 
