@@ -12,21 +12,21 @@ if (args.length < 1 || args.length > 3) {
     process.exit(1);
 }
 
-var host = 'localhost';
-var port = 15675;
+var host = 'rabbitmq';
+var port = 1883;
 var consumerId = args[0];
 var initialInstanceId = parseInt(args[1]) || 1;
 var numberOfInstances = parseInt(args[2]) || 1;
 
 var authTokenPeriodMillis = 5 * 60 * 1000;
 
-var url  = 'ws://' + host + ':' + port + '/ws';
-
+var url = 'mqtt://' + host + ':' + port;
 
 console.log('consumerId: ' + consumerId);
 console.log('initialInstanceId: ' + initialInstanceId);
 console.log('numberOfInstances: ' + numberOfInstances);
 
+var received = {};
 
 for (i = initialInstanceId; i < initialInstanceId + numberOfInstances; i++) {
     startInstance(i);
@@ -52,14 +52,22 @@ function startInstance(instanceId) {
     });
 
 
-    client.on('reconnect', function () {
-        console.log(logPrefix + 'Reconnected - Refreshing Access Token');
-        client.options.username = getUserDataStr(consumerId, instanceId);
+    client.on('message', function (topic, message, packet) {
+        var messageStr = message.toString();
+        var oldCounter = received[messageStr] || 0;
+        var newCounter = oldCounter + 1;
+        received[messageStr] = newCounter;
+
+        if (newCounter == numberOfInstances) {
+            delete received[messageStr];
+            console.log(logPrefix + consumerId + ': ' + numberOfInstances + ' * ' + messageStr);
+        }
     });
 
 
-    client.on('close', function () {
-        console.log(logPrefix + 'Disconnected');
+    client.on('reconnect', function () {
+        console.log(logPrefix + 'Reconnecting with new Access Token');
+        client.options.username = getUserDataStr(consumerId, instanceId);
     });
 
 
@@ -68,8 +76,8 @@ function startInstance(instanceId) {
     });
 
 
-    client.on('message', function (topic, message, packet) {
-        console.log(logPrefix + 'Received message: ' + message.toString());
+    client.on('close', function () {
+        console.log(logPrefix + 'Disconnected');
     });
 
 
@@ -77,6 +85,7 @@ function startInstance(instanceId) {
         console.log(logPrefix + 'Error: ' + error);
     });
 }
+
 
 function getUserDataStr(consumerId, instanceId) {
     return instanceId + ',' + getAuthToken(consumerId);
@@ -100,6 +109,7 @@ function checksum(data) { // fake :)
 function base64Encode(data) { // fake :)
     return '[' + data + ']';
 }
+
 
 function basename(path) {
     return path.split(/[\\/]/).pop();

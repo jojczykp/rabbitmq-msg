@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 public class Producer {
 
-    private static final String HOST = "localhost";
+    private static final String HOST = "rabbitmq";
     private static final int PORT = 5672;
     private static final String EXCHANGE_NAME = "mqtt.direct";
     private static final long AUTH_TOKEN_PERIOD_MILLIS = 60 * 1000;
@@ -44,7 +44,7 @@ public class Producer {
                 }
             }
 
-            sleepSecs(1);
+            sleepSecs(3);
         }
     }
 

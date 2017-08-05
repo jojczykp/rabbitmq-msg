@@ -35,7 +35,7 @@ class AuthService implements HttpHandler {
     }
 
     void start() throws IOException {
-        InetAddress localHost = Inet4Address.getLocalHost();
+        InetAddress localHost = Inet4Address.getByName("0.0.0.0");
         InetSocketAddress inetSocketAddress = new InetSocketAddress(localHost, LISTEN_PORT);
 
         System.out.println("Waiting on " + inetSocketAddress + ", urls: " + LISTEN_URL_PREFIX + "*");
