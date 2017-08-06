@@ -52,6 +52,17 @@
         "max-length": 20,
         "max-length-bytes": 1024
       }
+    },
+    {
+      "vhost": "/",
+      "apply-to": "queues",
+      "name": "amqp-queues",
+      "pattern": "^amqp\\.subscription\\..*$",
+      "definition": {
+        "expires": 60000,
+        "max-length": 20,
+        "max-length-bytes": 1024
+      }
     }
   ]
 }

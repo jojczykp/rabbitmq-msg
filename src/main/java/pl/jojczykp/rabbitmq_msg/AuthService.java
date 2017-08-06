@@ -167,6 +167,16 @@ class AuthService implements HttpHandler {
     }
 
     private boolean isQueueAllowed(String consumerId, String instanceId, String queueName) {
+        return isQueueAmqpAllowed(consumerId, instanceId, queueName) ||
+                isQueueMqttAllowed(consumerId, instanceId, queueName);
+    }
+
+    private boolean isQueueAmqpAllowed(String consumerId, String instanceId, String queueName) {
+        String allowedQueueName = "amqp.subscription." + consumerId + "." + instanceId;
+        return allowedQueueName.equals(queueName);
+    }
+
+    private boolean isQueueMqttAllowed(String consumerId, String instanceId, String queueName) {
         String allowedQueueName = "mqtt-subscription-" + consumerId + "-" + instanceId + "-qos1";
         return allowedQueueName.equals(queueName);
     }
