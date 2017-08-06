@@ -53,7 +53,7 @@ public class Producer extends Thread {
 
     private Producer(String producerId, int initialConsumerId, int finalConsumerId) {
         this.producerId = producerId;
-        this.instanceId = new Random().nextInt(1000) + 20000;
+        this.instanceId = new Random().nextInt(1000) + 20_000;
         this.initialConsumerId = initialConsumerId;
         this.finalConsumerId = finalConsumerId;
         this.channel = null;
@@ -82,7 +82,7 @@ public class Producer extends Thread {
                 }
             }
 
-            sleepSecs(1);
+            sleepRoughlyMillis(5_000);
         }
     }
 
@@ -134,9 +134,18 @@ public class Producer extends Thread {
         return "[" + data + "]";
     }
 
-    private static void sleepSecs(int n) {
+    private void sleepRoughlyMillis(double millis) {
+        double random = Math.random();
+        double deviation = Math.round(random * millis - millis / 2);
+        long duration = (long) (millis + deviation);
+
+        if (duration == 0) {
+            System.out.println(String.format("%s.%s: No delay between sends!", producerId, instanceId));
+            return;
+        }
+
         try {
-            Thread.sleep(n * 1000);
+            Thread.sleep(duration);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
