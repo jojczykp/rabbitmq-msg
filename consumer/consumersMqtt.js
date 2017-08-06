@@ -6,34 +6,33 @@ var mqtt = require('mqtt');
 
 
 var args = process.argv.slice(2);
-if (args.length < 1 || args.length > 3) {
-    console.log('Usage: %s consumerId [initialInstanceId] [numberOfInstances]', basename(process.argv[1]));
-    console.log('       Optional values default to 1 if missing or not numeric');
+if (args.length < 2) {
+    console.log('Usage: %s initialConsumerId numberOfConsumers [instanceId]', basename(process.argv[1]));
+    console.log('       instanceId (needed when running more times) defaults to 1');
     process.exit(1);
 }
 
 var host = 'rabbitmq';
 var port = 1883;
-var consumerId = args[0];
-var initialInstanceId = parseInt(args[1]) || 1;
-var numberOfInstances = parseInt(args[2]) || 1;
+var initialConsumerId = parseInt(args[0]);
+var numberOfConsumers = parseInt(args[1]);
+var instanceId = parseInt(args[2] || 1);
 
 var authTokenPeriodMillis = 5 * 60 * 1000;
 
 var url = 'mqtt://' + host + ':' + port;
 
-console.log('consumerId: ' + consumerId);
-console.log('initialInstanceId: ' + initialInstanceId);
-console.log('numberOfInstances: ' + numberOfInstances);
+console.log('initialConsumerId: ' + initialConsumerId);
+console.log('numberOfConsumers: ' + numberOfConsumers);
 
 var received = {};
 
-for (i = initialInstanceId; i < initialInstanceId + numberOfInstances; i++) {
-    startInstance(i);
+for (consumerNumber = initialConsumerId; consumerNumber < initialConsumerId + numberOfConsumers; consumerNumber++) {
+    startInstance('consumer' + consumerNumber, instanceId);
 }
 
 
-function startInstance(instanceId) {
+function startInstance(consumerId, instanceId) {
     var logPrefix = consumerId + '.' + instanceId + ': ';
 
     var client = mqtt.connect(url, {
@@ -58,9 +57,9 @@ function startInstance(instanceId) {
         var newCounter = oldCounter + 1;
         received[messageStr] = newCounter;
 
-        if (newCounter == numberOfInstances) {
+        if (newCounter == numberOfConsumers) {
             delete received[messageStr];
-            console.log(logPrefix + consumerId + ': ' + numberOfInstances + ' * ' + messageStr);
+            console.log('consumer%d to consumer%d: %d * %s', initialConsumerId, initialConsumerId + numberOfConsumers - 1, numberOfConsumers, messageStr);
         }
     });
 
