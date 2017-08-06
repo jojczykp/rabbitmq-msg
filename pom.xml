@@ -101,8 +101,9 @@
                                     <alias>rabbitmq</alias>
                                 </network>
                                 <ports>
-                                    <port>5672:5672/tcp</port>   <!-- RabbitMQ AMQP    - backend producers -->
-                                    <port>15675:15675/tcp</port> <!-- RabbitMQ MQTT/WS - web consumers -->
+                                    <port>5672:5672/tcp</port>   <!-- RabbitMQ AMQP    - backend producers     -->
+                                    <port>1883:1883/tcp</port>   <!-- RabbitMQ MQTT    - mqtt consumers        -->
+                                    <port>15675:15675/tcp</port> <!-- RabbitMQ MQTT/WS - web-sockets consumers -->
                                     <port>15672:15672/tcp</port> <!-- RabbitMQ Manager -->
                                 </ports>
                                 <volumes>
@@ -115,6 +116,7 @@
                                     <tcp>
                                         <ports>
                                             <port>5672</port>
+                                            <port>1883</port>
                                             <port>15675</port>
                                             <port>15672</port>
                                         </ports>
