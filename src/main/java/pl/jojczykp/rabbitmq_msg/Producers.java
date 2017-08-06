@@ -17,23 +17,24 @@ public class Producers {
 
     public static void main(String[] args) throws IOException, TimeoutException {
         if (args.length < 3) {
-            System.err.println("Usage: java -cp <app-jar> " + Producers.class.getName() + " producerId initialConsumerId numberOfConsumers");
+            System.err.println("Usage: java -cp <app-jar> " + Producers.class.getName() + " producerId initialConsumerId finalConsumerId");
             System.exit(1);
         }
 
-        String producerId = args[0];
-        int instanceId = new Random().nextInt(1000) + 20000;
-        int initialConsumerId = Integer.parseInt(args[1]);
-        int numberOfConsumers = Integer.parseInt(args[2]);
+        run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+    }
 
+    private static void run(String producerId, int initialConsumerId, int finalConsumerId) throws IOException {
+        int instanceId = new Random().nextInt(1000) + 20000;
         int messageNumber = 0;
         Channel channel = null;
         while (true) {
             try {
                 if (channel == null) {
-                    channel = connect(producerId, instanceId, initialConsumerId, numberOfConsumers);
+                    channel = connect(producerId, instanceId, initialConsumerId, finalConsumerId);
                 }
-                broadcastMessage(producerId, instanceId, channel, initialConsumerId, numberOfConsumers, messageNumber);
+                String message = String.format("%s.%d says Hello %d", producerId, instanceId, messageNumber);
+                broadcastMessage(channel, initialConsumerId, finalConsumerId, message);
                 messageNumber++;
             } catch (Exception e) {
                 System.out.println(String.format("%s.%s: Connection closed - reconnecting", producerId, instanceId));
@@ -43,11 +44,11 @@ public class Producers {
                 }
             }
 
-            sleepSecs(3);
+            sleepSecs(1);
         }
     }
 
-    private static Channel connect(String producerId, int instanceId, int initialConsumerId, int numberOfConsumers) throws IOException, TimeoutException {
+    private static Channel connect(String producerId, int instanceId, int initialConsumerId, int finalConsumerId) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
         factory.setPort(PORT);
@@ -58,20 +59,20 @@ public class Producers {
         Channel channel = connection.createChannel();
         channel.exchangeDeclarePassive(EXCHANGE_NAME);
 
-        System.out.println(String.format("%s.%s: Connected. Sending messages to %s/%s for consumer%d to consumer%d. To exit press CTRL+C",
-                producerId, instanceId, EXCHANGE_NAME, HOST, initialConsumerId, initialConsumerId + numberOfConsumers - 1));
+        System.out.println(String.format("%s.%s: Connected to %s/%s to (consumer%d to consumer%d).",
+                producerId, instanceId, EXCHANGE_NAME, HOST, initialConsumerId, finalConsumerId));
+        System.out.println(String.format("%s.%s: To exit press CTRL+C", producerId, instanceId));
 
         return channel;
     }
 
-    private static void broadcastMessage(String producerId, int instanceId, Channel channel, int initialConsumerId, int numberOfConsumers, int messageNumber) throws IOException {
-        String message = String.format("Hello World %d from %s.%d!", messageNumber, producerId, instanceId);
-
-        for (int consumerId = initialConsumerId; consumerId < initialConsumerId + numberOfConsumers; consumerId++) {
+    private static void broadcastMessage(Channel channel, int initialConsumerId, int finalConsumerId, String message) throws IOException {
+        for (int consumerId = initialConsumerId; consumerId <= finalConsumerId; consumerId++) {
             channel.basicPublish(EXCHANGE_NAME, "consumer" + consumerId, null, message.getBytes());
         }
 
-        System.out.println(String.format("%s.%d: Sent to %s/%s for consumer%d to consumer%d: %d * %s", producerId, instanceId, EXCHANGE_NAME, HOST, initialConsumerId, initialConsumerId + numberOfConsumers - 1, numberOfConsumers, message));
+        System.out.println(String.format("Sent to (consumer%d to consumer%d): %d*[%s]",
+                initialConsumerId, finalConsumerId, finalConsumerId - initialConsumerId + 1, message));
     }
 
     private static String createAuthToken(String producerId, int instanceId) {

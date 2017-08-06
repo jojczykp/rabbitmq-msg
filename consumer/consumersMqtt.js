@@ -7,28 +7,36 @@ var mqtt = require('mqtt');
 
 var args = process.argv.slice(2);
 if (args.length < 2) {
-    console.log('Usage: %s initialConsumerId numberOfConsumers [instanceId]', basename(process.argv[1]));
-    console.log('       instanceId (needed when running more times) defaults to 1');
+    console.log('Usage: %s initialConsumerId finalConsumerId [numberOfInstancesPerConsumer]', basename(process.argv[1]));
+    console.log('       Optional parameters default to 1');
     process.exit(1);
 }
 
 var host = 'rabbitmq';
 var port = 1883;
 var initialConsumerId = parseInt(args[0]);
-var numberOfConsumers = parseInt(args[1]);
-var instanceId = parseInt(args[2] || 1);
+var finalConsumerId = parseInt(args[1]);
+var numberOfInstancesPerConsumer = parseInt(args[2] || 1);
 
 var authTokenPeriodMillis = 5 * 60 * 1000;
 
 var url = 'mqtt://' + host + ':' + port;
 
-console.log('initialConsumerId: ' + initialConsumerId);
-console.log('numberOfConsumers: ' + numberOfConsumers);
+console.log('Listening to ' + url);
+console.log('To exit press CTRL+C');
+console.log('- initialConsumerId: ' + initialConsumerId);
+console.log('- finalConsumerId: ' + finalConsumerId);
+console.log('- numberOfInstancesPerConsumer: ' + numberOfInstancesPerConsumer);
+console.log('');
 
 var received = {};
 
-for (consumerNumber = initialConsumerId; consumerNumber < initialConsumerId + numberOfConsumers; consumerNumber++) {
-    startInstance('consumer' + consumerNumber, instanceId);
+var numberOfInstances = 0;
+for (var consumerId = initialConsumerId ; consumerId <= finalConsumerId ; consumerId++) {
+    for (var instanceId = 1 ; instanceId <= numberOfInstancesPerConsumer ; instanceId++) {
+        startInstance('consumer' + consumerId, instanceId);
+        numberOfInstances++;
+    }
 }
 
 
@@ -57,9 +65,10 @@ function startInstance(consumerId, instanceId) {
         var newCounter = oldCounter + 1;
         received[messageStr] = newCounter;
 
-        if (newCounter == numberOfConsumers) {
+        if (newCounter == numberOfInstances) {
             delete received[messageStr];
-            console.log('consumer%d to consumer%d: %d * %s', initialConsumerId, initialConsumerId + numberOfConsumers - 1, numberOfConsumers, messageStr);
+            console.log('Received for (consumer%d to consumer%d)*%d: %d*[%s]',
+                   initialConsumerId, finalConsumerId, numberOfInstancesPerConsumer, numberOfInstances, messageStr);
         }
     });
 
