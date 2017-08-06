@@ -12,7 +12,7 @@ if (args.length < 2) {
     process.exit(1);
 }
 
-var host = 'rabbitmq';
+var host = 'localhost';
 var port = 1883;
 var initialConsumerId = parseInt(args[0]);
 var finalConsumerId = parseInt(args[1]);

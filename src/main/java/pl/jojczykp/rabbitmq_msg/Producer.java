@@ -8,38 +8,72 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-public class Producers {
+public class Producer extends Thread {
 
-    private static final String HOST = "rabbitmq";
+    private static final String HOST = "localhost";
     private static final int PORT = 5672;
     private static final String EXCHANGE_NAME = "mqtt.direct";
     private static final long AUTH_TOKEN_PERIOD_MILLIS = 60 * 1000;
 
+    private final String producerId;
+    private final int instanceId;
+    private final int initialConsumerId;
+    private final int finalConsumerId;
+    private Channel channel;
+
     public static void main(String[] args) throws IOException, TimeoutException {
-        if (args.length < 3) {
-            System.err.println("Usage: java -cp <app-jar> " + Producers.class.getName() + " producerId initialConsumerId finalConsumerId");
+        if (args.length < 4) {
+            System.err.println("Usage: java -cp <app-jar> " + Producer.class.getName() +
+                    " initialProducerId finalProducerId initialConsumerId finalConsumerId");
             System.exit(1);
         }
 
-        run(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+        int initialProducerId = Integer.parseInt(args[0]);
+        int finalProducerId = Integer.parseInt(args[1]);
+        int initialConsumerId = Integer.parseInt(args[2]);
+        int finalConsumerId = Integer.parseInt(args[3]);
+
+        System.out.println(String.format("Sending to %s@%s:%d", EXCHANGE_NAME, HOST, PORT));
+        System.out.println("To exit press CTRL+C");
+        System.out.println("- initialProducerId: " + initialProducerId);
+        System.out.println("- finalProducerId: " + finalProducerId);
+        System.out.println("- initialConsumerId: " + initialConsumerId);
+        System.out.println("- finalConsumerId: " + finalConsumerId);
+        System.out.println();
+
+
+        for (int producerNumber = initialProducerId ; producerNumber <= finalProducerId ; producerNumber++) {
+            new Producer("producer" + producerNumber, initialConsumerId, finalConsumerId).start();
+        }
     }
 
-    private static void run(String producerId, int initialConsumerId, int finalConsumerId) throws IOException {
-        int instanceId = new Random().nextInt(1000) + 20000;
+    private Producer(String producerId, int initialConsumerId, int finalConsumerId) {
+        this.producerId = producerId;
+        this.instanceId = new Random().nextInt(1000) + 20000;
+        this.initialConsumerId = initialConsumerId;
+        this.finalConsumerId = finalConsumerId;
+        this.channel = null;
+    }
+
+    @Override
+    public void run() {
         int messageNumber = 0;
-        Channel channel = null;
         while (true) {
             try {
                 if (channel == null) {
-                    channel = connect(producerId, instanceId, initialConsumerId, finalConsumerId);
+                    channel = connect();
                 }
                 String message = String.format("%s.%d says Hello %d", producerId, instanceId, messageNumber);
-                broadcastMessage(channel, initialConsumerId, finalConsumerId, message);
+                broadcastMessage(message);
                 messageNumber++;
             } catch (Exception e) {
-                System.out.println(String.format("%s.%s: Connection closed - reconnecting", producerId, instanceId));
+                System.out.println(String.format("%s.%d: Reconnecting with new Access Token", producerId, instanceId));
                 if (channel != null) {
-                    channel.abort();
+                    try {
+                        channel.abort();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
                     channel = null;
                 }
             }
@@ -48,25 +82,23 @@ public class Producers {
         }
     }
 
-    private static Channel connect(String producerId, int instanceId, int initialConsumerId, int finalConsumerId) throws IOException, TimeoutException {
+    private Channel connect() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
         factory.setPort(PORT);
-        factory.setUsername(createAuthToken(producerId, instanceId));
+        factory.setUsername(createAuthToken());
         factory.setPassword("");
         factory.setAutomaticRecoveryEnabled(false);
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
         channel.exchangeDeclarePassive(EXCHANGE_NAME);
 
-        System.out.println(String.format("%s.%s: Connected to %s/%s to (consumer%d to consumer%d).",
-                producerId, instanceId, EXCHANGE_NAME, HOST, initialConsumerId, finalConsumerId));
-        System.out.println(String.format("%s.%s: To exit press CTRL+C", producerId, instanceId));
+        System.out.println(String.format("%s.%s: Connected", producerId, instanceId));
 
         return channel;
     }
 
-    private static void broadcastMessage(Channel channel, int initialConsumerId, int finalConsumerId, String message) throws IOException {
+    private void broadcastMessage(String message) throws IOException {
         for (int consumerId = initialConsumerId; consumerId <= finalConsumerId; consumerId++) {
             channel.basicPublish(EXCHANGE_NAME, "consumer" + consumerId, null, message.getBytes());
         }
@@ -75,7 +107,7 @@ public class Producers {
                 initialConsumerId, finalConsumerId, finalConsumerId - initialConsumerId + 1, message));
     }
 
-    private static String createAuthToken(String producerId, int instanceId) {
+    private String createAuthToken() {
         long authTokenExpiryTimestamp = System.currentTimeMillis() + AUTH_TOKEN_PERIOD_MILLIS;
         String authTokenData = producerId + ',' + authTokenExpiryTimestamp;
         long authTokenChecksum = checksum(authTokenData);

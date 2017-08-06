@@ -43,15 +43,15 @@ Other producers/consumers fail on access permissions.
 
     1.  Sending to consumer1 and consumer2:
     
-        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producers producer1 consumer1 consumer2`
+        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producer producer1 consumer1 consumer2`
 
     2. Sending to consumer1 only:
     
-        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producers producer2 consumer1`
+        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producer producer2 consumer1`
 
     3. Failing on access denied:
 
-        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producers abcd consumer1`
+        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producer abcd consumer1`
         
 4. Consumers (in `consumer` folder)
 
