@@ -25,7 +25,8 @@ var url = 'mqtt://' + host + ':' + port;
 console.log('Listening to ' + url);
 console.log('To exit press CTRL+C');
 console.log('- initialConsumerId: ' + initialConsumerId);
-console.log('- finalConsumerId: ' + finalConsumerId);
+console.log('- finalConsumerId:   ' + finalConsumerId);
+console.log('- numberOfConsumers: ' + (finalConsumerId - initialConsumerId + 1));
 console.log('- numberOfInstancesPerConsumer: ' + numberOfInstancesPerConsumer);
 console.log('');
 

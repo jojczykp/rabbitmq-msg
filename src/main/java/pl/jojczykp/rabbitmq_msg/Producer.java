@@ -1,19 +1,24 @@
 package pl.jojczykp.rabbitmq_msg;
 
+import com.google.common.collect.ImmutableMap;
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Producer extends Thread {
 
     private static final String HOST = "localhost";
     private static final int PORT = 5672;
     private static final String EXCHANGE_NAME = "mqtt.direct";
-    private static final long AUTH_TOKEN_PERIOD_MILLIS = 60 * 1000;
+    private static final long AUTH_TOKEN_PERIOD_MILLIS = 30 * 60 * 1000;
 
     private final String producerId;
     private final int instanceId;
@@ -40,7 +45,6 @@ public class Producer extends Thread {
         System.out.println("- initialConsumerId: " + initialConsumerId);
         System.out.println("- finalConsumerId: " + finalConsumerId);
         System.out.println();
-
 
         for (int producerNumber = initialProducerId ; producerNumber <= finalProducerId ; producerNumber++) {
             new Producer("producer" + producerNumber, initialConsumerId, finalConsumerId).start();
@@ -99,12 +103,19 @@ public class Producer extends Thread {
     }
 
     private void broadcastMessage(String message) throws IOException {
-        for (int consumerId = initialConsumerId; consumerId <= finalConsumerId; consumerId++) {
-            channel.basicPublish(EXCHANGE_NAME, "consumer" + consumerId, null, message.getBytes());
-        }
+        String to = "consumer" + initialConsumerId;
+        List<String> bcc = IntStream.range(initialConsumerId + 1, finalConsumerId + 1)
+                .mapToObj(i -> "consumer" + i)
+                .collect(Collectors.toList());
 
-        System.out.println(String.format("Sent to (consumer%d to consumer%d): %d*[%s]",
-                initialConsumerId, finalConsumerId, finalConsumerId - initialConsumerId + 1, message));
+        BasicProperties props = new BasicProperties.Builder()
+                .headers(ImmutableMap.of("BCC", bcc))
+                .build();
+
+        channel.basicPublish(EXCHANGE_NAME, to, props, message.getBytes());
+
+        System.out.println(String.format("Sent to (consumer%d to consumer%d): [%s]",
+                initialConsumerId, finalConsumerId, message));
     }
 
     private String createAuthToken() {
