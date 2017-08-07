@@ -116,6 +116,7 @@ Other producers/consumers fail on access permissions.
     `node consumersAmqp.js 10001 12002 2`
     
     - Used ~9.3 GB of RAM
+    - Client connections established in 2 mins (some failed and reconnected)
     - Managed to deliver all messages
 
 2. MQTT consumer
@@ -123,10 +124,13 @@ Other producers/consumers fail on access permissions.
     `node consumersMqtt.js 10001 12002 2`
     
     - Used ~8.2 GB of RAM
+    - Client connections established in 20 secs (all went smoothly)
     - Managed to deliver all messages
     
     Both clients have to establish a lot of connections in a short initial period of time.
     Some AMQP failed and had to reconnect, MQTT was smooth and significantly faster.
+    (I'm not sure at the moment however, whether AMPQ problems come from server or
+    maybe client OS configuration.) 
     
 3. STOMP
     

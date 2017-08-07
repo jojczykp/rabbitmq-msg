@@ -14,7 +14,7 @@ if (args.length < 2) {
 
 var host = 'localhost';
 var port = 5672;
-var exchangeName = 'mqtt.direct';
+var exchangeName = 'exchange.direct';
 var initialConsumerId = parseInt(args[0]);
 var finalConsumerId = parseInt(args[1]);
 var numberOfInstancesPerConsumer = parseInt(args[2] || 1);
