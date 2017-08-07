@@ -71,7 +71,7 @@ Other producers/consumers fail on access permissions.
     
             `node consumersMqtt.js 3 3`
     
-5. Performance check
+5. Way of performance check
 
     * 2 producers producing for each consumer
     * 5000 consumers, 3 instances each
@@ -84,7 +84,7 @@ Other producers/consumers fail on access permissions.
     
         `node consumersMqtt.js 1001 5000`
     
-6. Real performance check
+6. Real way of performance check
 
     Above performance test example is not reliable due to docker and single OS limits (number of file descriptors, open
     sockets, ...). To make sure test is reliable:
@@ -96,3 +96,39 @@ Other producers/consumers fail on access permissions.
       points to IP hosting AuthService (or updating _rabbitmq.config_ properly)
     - Make sure OS parameters are tuned
       (i.e. [https://www.rabbitmq.com/networking.html](https://www.rabbitmq.com/networking.html))
+
+
+# Some performance results
+
+- Server
+    - RabbitMQ 3.6.10 on VirtualBox with Ubuntu 17
+    - 16GB of RAM available
+    - 4 CPU cores available.
+- Producers/Consumers
+    - Fedora 26
+    - 16GB of RAM available
+    - 4 CPU cores available.
+
+    `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rbitmq_msg.Producer 1 2 10001 12002`
+    
+1. AMQP consumer
+    
+    `node consumersAmqp.js 10001 12002 2`
+    
+    - Used ~9.3 GB of RAM
+    - Managed to deliver all messages
+
+2. MQTT consumer
+    
+    `node consumersMqtt.js 10001 12002 2`
+    
+    - Used ~8.2 GB of RAM
+    - Managed to deliver all messages
+    
+    Both clients have to establish a lot of connections in a short initial period of time.
+    Some AMQP failed and had to reconnect, MQTT was smooth and significantly faster.
+    
+3. STOMP
+    
+    To Be Done
+    
