@@ -14,7 +14,7 @@ if (args.length < 2) {
 
 var host = 'localhost';
 var port = 61613;
-//var port = 61614;
+//var port = 15674;
 var reconnectPeriod = 1000; // ms
 var exchangeName = 'exchange.direct';
 var initialConsumerId = parseInt(args[0]);
