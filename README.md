@@ -109,6 +109,10 @@ Other producers/consumers fail on access permissions.
     - 16GB of RAM available
     - 4 CPU cores available.
 
+    Clients startup time measured while producer was down.
+    
+    Message length: 30 chars.
+
     `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rbitmq_msg.Producer 1 2 10001 12002`
     
 1. AMQP consumer
@@ -123,16 +127,28 @@ Other producers/consumers fail on access permissions.
     
     `node consumersMqtt.js 10001 12002 2`
     
-    - Used ~8.2 GB of RAM
-    - Client connections established in 20 secs (all went smoothly)
+    - Used ~8.0 GB of RAM
+    - Client connections established in 25 secs (all went smoothly)
     - Managed to deliver all messages
     
-    Both clients have to establish a lot of connections in a short initial period of time.
-    Some AMQP failed and had to reconnect, MQTT was smooth and significantly faster.
-    (I'm not sure at the moment however, whether AMPQ problems come from server or
-    maybe client OS configuration.) 
+   
+3. MQTT over WS consumer
+
+    // To Be Done
+
+4. STOMP
     
-3. STOMP
+    `node consumersStomp.js 10001 12002 2`
     
-    To Be Done
+    - Used ~9.5 GB of RAM
+    - Client connections established in 25 secs (went mostly smoothly)
+    - Managed to deliver all messages
     
+5. STOMP over WS consumer
+
+    // To Be Done
+
+
+Current winner seems to be MQTT :)
+// To Be Done - ws:// versions os MQTT and STOMP.
+// To Be Done - try to tune STOMP config

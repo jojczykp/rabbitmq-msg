@@ -21,6 +21,7 @@
   "homepage": "https://github.com/jojczykp/rabbitmq-msg#readme",
   "dependencies": {
     "amqp": "^0.2.6",
-    "mqtt": "^2.10.0"
+    "mqtt": "^2.10.0",
+    "stompjs": "^2.3.3"
   }
 }

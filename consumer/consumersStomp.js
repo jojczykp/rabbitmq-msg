@@ -2,7 +2,7 @@
 
 'use strict;'
 
-var mqtt = require('mqtt');
+var stomp = require('stompjs');
 
 
 var args = process.argv.slice(2);
@@ -13,17 +13,18 @@ if (args.length < 2) {
 }
 
 var host = 'localhost';
+var port = 61613;
+//var port = 61614;
 var reconnectPeriod = 1000; // ms
+var exchangeName = 'exchange.direct';
 var initialConsumerId = parseInt(args[0]);
 var finalConsumerId = parseInt(args[1]);
 var numberOfInstancesPerConsumer = parseInt(args[2] || 1);
 
+
 var authTokenPeriodMillis = 5 * 60 * 1000;
 
-var url = 'mqtt://' + host + ':' + 1883;
-//var url = 'ws://' + host + ':' + 15675 + '/ws';
-
-console.log('Connecting to ' + url);
+console.log('Connecting to %s:%d', host, port);
 console.log('To exit press CTRL+C');
 console.log('- initialConsumerId: ' + initialConsumerId);
 console.log('- finalConsumerId:   ' + finalConsumerId);
@@ -41,27 +42,63 @@ for (var consumerId = initialConsumerId ; consumerId <= finalConsumerId ; consum
     }
 }
 
-
 function startInstance(consumerId, instanceId) {
     var logPrefix = consumerId + '.' + instanceId + ': ';
+    var reconnecting = false;
+    var client;
 
-    var client = mqtt.connect(url, {
-        username: getUserDataStr(consumerId, instanceId),
-        password: '[ignored]',
-        clientId: consumerId + '-' + instanceId + '-',
-        reconnectPeriod: reconnectPeriod,
-        clean: false
-    });
+    connect();
 
 
-    client.on('connect', function () {
-        client.subscribe(consumerId, { qos: 1 });
+    function connect() {
+        client = stomp.overTCP(host, port);
+//        var client = stomp.overWS('ws://' + host + ':' + port + '/stomp');
+//        client.debug = onDebug;
+        client.connect(
+            getUserDataStr(consumerId, instanceId),
+            '[ignored]',
+            onConnected,
+            onError
+        );
+    }
+
+
+    function onError(error) {
+        if (reconnecting) {
+            return;
+        }
+
+        console.log(logPrefix + 'Error: ' + error);
+        console.log(logPrefix + 'Reconnecting with new Access Token');
+
+        reconnecting = true;
+
+        setTimeout(() => {
+            reconnecting = false;
+            connect();
+        }, reconnectPeriod);
+    }
+
+
+    function onConnected() {
+        client.subscribe(
+            '/exchange/' + exchangeName + '/' + consumerId,
+            onMessage,
+            {
+                'x-queue-name': 'stomp-subscription-' + consumerId + '-' + instanceId,
+                'auto-delete': false,
+                'durable': true,
+                'ack': 'client-individual',
+                'id': 'qpa'
+            });
+
         console.log(logPrefix + 'Subscribed');
-    });
+        reconnecting = false;
+    }
 
 
-    client.on('message', function (topic, message, packet) {
-        var messageStr = message.toString();
+    function onMessage(messageObject) {
+        var messageStr = messageObject.body;
         var oldCounter = received[messageStr] || 0;
         var newCounter = oldCounter + 1;
         received[messageStr] = newCounter;
@@ -71,28 +108,14 @@ function startInstance(consumerId, instanceId) {
             console.log('Received for (consumer%d to consumer%d)*%d: %d*[%s]',
                    initialConsumerId, finalConsumerId, numberOfInstancesPerConsumer, numberOfInstances, messageStr);
         }
-    });
+
+        messageObject.ack();
+    }
 
 
-    client.on('reconnect', function () {
-        console.log(logPrefix + 'Reconnecting with new Access Token');
-        client.options.username = getUserDataStr(consumerId, instanceId);
-    });
-
-
-    client.on('offline', function () {
-        console.log(logPrefix + 'Offline');
-    });
-
-
-    client.on('close', function () {
-        console.log(logPrefix + 'Disconnected');
-    });
-
-
-    client.on('error', function (error) {
-        console.log(logPrefix + 'Error: ' + error);
-    });
+//    function onDebug(message) {
+//        console.log(logPrefix + 'Debug: ' + message);
+//    }
 }
 
 
