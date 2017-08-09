@@ -35,12 +35,19 @@ wss.on('connection', function connection(consumerWs) {
 
 
 function startRabbitClient(userDataStr, consumerWs) {
-    //TODO extract from userDataStr, validate
-    const consumerId = "consumer1";
-    const instanceId = 1;
+    const authTokenExtracts = authTokenExtractAndValidate(userDataStr);
+    if (authTokenExtracts == null) {
+        console.log(userDataStr + ': Disconnecting consumer');
+        consumerWs.close();
+        console.log(userDataStr + ': Disconnected');
+        return;
+    }
 
-    const queueName = 'amqp.subscription.' + consumerId + '.' + instanceId;
-    const logPrefix = userDataStr + ': ';
+    consumerId = authTokenExtracts.consumerId;
+    instanceId = authTokenExtracts.instanceId;
+
+    const logPrefix = consumerId + '.' + instanceId + ': ';
+    const queueName = 'ws-proxy-subscription-' + consumerId + '-' + instanceId;
 
     console.log(logPrefix + 'Starting RabbitMQ AMQP client');
 
@@ -99,4 +106,68 @@ function startRabbitClient(userDataStr, consumerWs) {
         consumerWs.close();
         console.log(logPrefix + 'Disconnected from consumer');
     }
+}
+
+
+function authTokenExtractAndValidate(userDataStr) {
+    const userData = userDataStr.split(",");
+    if (userData.length < 2) {
+        console.log("Wrong User Data: %s", userDataStr);
+        return null;
+    }
+
+    const instanceId = userData[0];
+    const authTokenStr = base64Decode(userData.slice(1).join());
+    const authToken = authTokenStr.split(" ");
+    const authTokenMethod = authToken[0];
+
+    if ("Bearer" !== authTokenMethod) {
+        console.log("'%s': Wrong Auth Method: %s", authTokenStr, authTokenMethod);
+        return null;
+    }
+
+    const authTokenDataStr = authToken[1];
+    const authTokenData = authTokenDataStr.split(",");
+
+    if (authTokenData.length < 3) {
+        console.log("'%s': Wrong Auth Token: %s", authTokenStr, authTokenDataStr);
+        return null;
+    }
+
+    const actualChecksumStr = authTokenData[2];
+    const actualChecksum = parseInt(actualChecksumStr);
+
+    if (isNaN(actualChecksum) || actualChecksum != checksum(substringBeforeLast(authTokenDataStr, ','))) {
+        console.log("'%s': Wrong Auth Checksum: %s", authTokenStr, actualChecksumStr);
+        return null;
+    }
+
+    const consumerId = authTokenData[0];
+    const tokenTimestampStr = authTokenData[1];
+    const tokenTimestamp = parseInt(tokenTimestampStr);
+
+    if (isNaN(tokenTimestamp) || tokenTimestamp < Date.now()) {
+        console.log("%s.%s: Token expired", consumerId, instanceId);
+        return null;
+    }
+
+    return {
+        consumerId: consumerId,
+        instanceId: instanceId
+    };
+}
+
+
+function substringBeforeLast(str, ch) {
+    return str.substring(0, str.lastIndexOf(ch));
+}
+
+
+function base64Decode(data) { // fake - remove leading '[' and tailing ']' :)
+    return data.substring(1, data.length - 1);
+}
+
+
+function checksum(data) { // fake
+    return data.length;
 }

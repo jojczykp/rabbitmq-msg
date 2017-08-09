@@ -74,6 +74,17 @@
         "max-length": 20,
         "max-length-bytes": 1024
       }
+    },
+    {
+      "vhost": "/",
+      "apply-to": "queues",
+      "name": "ws-proxy-queues",
+      "pattern": "^ws-proxy-subscription-.*$",
+      "definition": {
+        "expires": 60000,
+        "max-length": 20,
+        "max-length-bytes": 1024
+      }
     }
   ]
 }
