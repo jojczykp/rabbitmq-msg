@@ -1,0 +1,26 @@
+{
+  "name": "rabbitmq-msg",
+  "version": "0.0.1",
+  "description": "RabbitMQ Messaging",
+  "main": "consumer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jojczykp/rabbitmq-msg.git"
+  },
+  "keywords": [
+    "rabbitmq"
+  ],
+  "author": "Paweł Jojczyk",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/jojczykp/rabbitmq-msg/issues"
+  },
+  "homepage": "https://github.com/jojczykp/rabbitmq-msg#readme",
+  "dependencies": {
+    "mqtt": "^2.10.0",
+    "ws": "^3.1.0"
+  }
+}

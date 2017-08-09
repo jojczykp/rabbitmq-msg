@@ -51,7 +51,7 @@ Other producers/consumers fail on access permissions.
 
 4. Consumers (in `consumer` folder)
 
-    `cd consumer`
+    `cd consumer_direct`
     
     1. Build
     
