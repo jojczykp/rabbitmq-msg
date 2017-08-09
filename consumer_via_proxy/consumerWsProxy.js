@@ -4,26 +4,40 @@
 const WebSocket = require('ws');
 
 
-const host = 'localhost';
-const port = 9000;
+var args = process.argv.slice(2);
+if (args.length < 2) {
+    console.log('Usage: %s consumerId instanceId', basename(process.argv[1]));
+    console.log(' E.g.: %s 1 1', basename(process.argv[1]));
+    process.exit(1);
+}
+
+
+const url = 'ws://localhost:9000';
 
 const reconnectPeriod = 1000; // ms
 
 const authTokenPeriodMillis = 5 * 60 * 1000;
 
 
-const clientId = "consumer1";
-const instanceId = 1;
+const consumerId = "consumer" + args[0];
+const instanceId = args[1];
 
 
-startClient(getUserDataStr(clientId, instanceId));
+console.log('Connecting to ' + url);
+console.log('To exit press CTRL+C');
+console.log('- consumerId: ' + consumerId);
+console.log('- instanceId: ' + instanceId);
+console.log('');
 
 
-function startClient(userDataStr) {
-    const ws = new WebSocket('ws://' + host + ':' + port);
+startConsumer(getUserDataStr(consumerId, instanceId));
+
+
+function startConsumer(userDataStr) {
+    const ws = new WebSocket(url);
 
     ws.on('open', function open() {
-        console.log('Connected to %s:%d', host, port);
+        console.log('Connected to ' + url);
         ws.send(userDataStr);
     });
 

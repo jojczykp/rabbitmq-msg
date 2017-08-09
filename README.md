@@ -150,5 +150,19 @@ Other producers/consumers fail on access permissions.
 
 
 Current winner seems to be MQTT :)
-// To Be Done - ws:// versions os MQTT and STOMP.
-// To Be Done - try to tune STOMP config
+
+// To Be Done - ws:// versions of MQTT and STOMP.
+
+
+# WS client via proxy
+
+There is also another option to authenticate client - proxy before RabbitMQ.
+With this configuration client connects to _auth-proxy_ (via ws:// or wss://)
+which does authentication and authorization. Then forwards to RabbitMQ.
+
+There is no need to use _AuthService_ nor _rabbit_auth_backend_http_ plugin
+with _auth-proxy_. RabbitMQ can trust every incoming request.
+Also access token expiry is implemented in _auth-proxy_.
+
+Another benefit of using _auth-proxy_ is that it can handle TLS encryption
+separately from from RabbitMQ.  
