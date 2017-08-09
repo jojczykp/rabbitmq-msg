@@ -45,6 +45,8 @@ function startRabbitClient(userDataStr, consumerWs) {
 
     consumerId = authTokenExtracts.consumerId;
     instanceId = authTokenExtracts.instanceId;
+    tokenTimestamp = authTokenExtracts.tokenTimestamp;
+    setTimeout(() => closeBothConnections('Access Token Expired'), tokenTimestamp - Date.now())
 
     const logPrefix = consumerId + '.' + instanceId + ': ';
     const queueName = 'ws-proxy-subscription-' + consumerId + '-' + instanceId;
@@ -82,15 +84,13 @@ function startRabbitClient(userDataStr, consumerWs) {
             consumerWs.send(messageStr);
             messageObject.acknowledge();
         } catch (err) {
-            console.log(logPrefix + 'Delivery failed: %s', err);
-            closeBothConnections();
+            closeBothConnections('Delivery failed: ' + err.toString());
         }
     };
 
 
     rabbitConnection.on('close', function () {
-        console.log(logPrefix + 'Connection to RabbitMQ closed');
-        closeBothConnections();
+        closeBothConnections('Connection to RabbitMQ closed');
     });
 
 
@@ -99,7 +99,8 @@ function startRabbitClient(userDataStr, consumerWs) {
     });
 
 
-    function closeBothConnections() {
+    function closeBothConnections(reason) {
+        console.log(logPrefix + reason);
         console.log(logPrefix + 'Disconnecting from RabbitMQ');
         rabbitConnection.disconnect();
         console.log(logPrefix + 'Disconnected from RabbitMQ');
@@ -153,7 +154,8 @@ function authTokenExtractAndValidate(userDataStr) {
 
     return {
         consumerId: consumerId,
-        instanceId: instanceId
+        instanceId: instanceId,
+        tokenTimestamp: tokenTimestamp
     };
 }
 

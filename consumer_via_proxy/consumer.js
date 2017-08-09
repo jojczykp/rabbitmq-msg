@@ -12,7 +12,11 @@ const reconnectPeriod = 1000; // ms
 const authTokenPeriodMillis = 5 * 60 * 1000;
 
 
-startClient(getUserDataStr("consumer1", 1));
+const clientId = "consumer1";
+const instanceId = 1;
+
+
+startClient(getUserDataStr(clientId, instanceId));
 
 
 function startClient(userDataStr) {
@@ -29,7 +33,7 @@ function startClient(userDataStr) {
 
     ws.on('close', function incoming() {
         console.log('Closed. Retrying...');
-        setTimeout(() => startClient(userDataStr), reconnectPeriod);
+        setTimeout(() => startClient(getUserDataStr(clientId, instanceId)), reconnectPeriod);
     });
 
     ws.on('error', function incoming(error) {
