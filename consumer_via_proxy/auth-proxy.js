@@ -104,7 +104,7 @@ function startRabbitClient(userDataStr, consumerWs) {
         console.log(logPrefix + 'Disconnecting from RabbitMQ');
         rabbitConnection.disconnect();
         console.log(logPrefix + 'Disconnected from RabbitMQ');
-        consumerWs.close();
+        consumerWs.close(); // TODO what about reusing single connection, just dropping subscription? :)
         console.log(logPrefix + 'Disconnected from consumer');
     }
 }

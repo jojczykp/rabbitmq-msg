@@ -175,7 +175,8 @@ client failed. Message stays in a queue redy for redelivery.
 
 Since previous tests show MQTT more performant, it would be great to try
 using MQTT with client giving control over PUBACKs nad, if better, replace
-AMQP here. Or tune AMQP.
+AMQP here. Or tune AMQP (i.e. sharing single connection with multiple channels
+looks promising).
 
 
 # WS Client via auth-proxy - Some performance results
