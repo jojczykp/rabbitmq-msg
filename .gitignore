@@ -3,3 +3,5 @@
 target/
 consumer/node_modules/
 consumer/npm-debug.log
+api-proxy/node_modules/
+api-proxy/npm-debug.log

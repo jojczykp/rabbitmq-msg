@@ -18,7 +18,6 @@ public class Producer extends Thread {
     private static final String HOST = "localhost";
     private static final int PORT = 5672;
     private static final String EXCHANGE_NAME = "exchange.direct";
-    private static final long AUTH_TOKEN_PERIOD_MILLIS = 30 * 60 * 1000;
 
     private final String producerId;
     private final int instanceId;

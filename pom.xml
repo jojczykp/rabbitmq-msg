@@ -141,7 +141,7 @@
                                 </ports>
                                 <volumes>
                                     <bind>
-                                        <volume>${project.basedir}/consumer_via_proxy:/consumer_via_proxy:ro,Z</volume>
+                                        <volume>${project.basedir}/auth-proxy:/auth-proxy:ro,Z</volume>
                                     </bind>
                                 </volumes>
                                 <wait>
@@ -152,7 +152,7 @@
                                     </tcp>
                                     <time>30000</time>
                                 </wait>
-                                <cmd>node /consumer_via_proxy/auth-proxy.js 1</cmd>
+                                <cmd>node /auth-proxy/auth-proxy.js 1</cmd>
                                 <log>
                                     <color>magenta</color>
                                     <prefix>AuthProxy</prefix>

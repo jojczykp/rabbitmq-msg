@@ -1,0 +1,25 @@
+{
+  "name": "rabbitmq-msg-consumers",
+  "version": "0.0.1",
+  "description": "RabbitMQ Messaging - Consumers",
+  "main": "consumers.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jojczykp/rabbitmq-msg.git"
+  },
+  "keywords": [
+    "rabbitmq"
+  ],
+  "author": "Paweł Jojczyk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jojczykp/rabbitmq-msg/issues"
+  },
+  "homepage": "https://github.com/jojczykp/rabbitmq-msg#readme",
+  "dependencies": {
+    "ws": "^3.1.0"
+  }
+}
