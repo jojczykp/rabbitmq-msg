@@ -104,7 +104,7 @@ function getUserDataStr(consumerId, instanceId) {
 
 function getAuthToken(consumerId) {
     var authTokenExpiryTimestamp = Date.now() + authTokenPeriodMillis;
-    var authTokenData = consumerId + ',' + authTokenExpiryTimestamp;
+    var authTokenData = 'consumer,' + consumerId + ',' + authTokenExpiryTimestamp;
     var authTokenChecksum = checksum(authTokenData);
 
     return base64Encode('Bearer ' + authTokenData + ',' + authTokenChecksum);

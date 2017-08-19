@@ -6,7 +6,7 @@ const amqp = require('amqp');
 
 
 const listeningPort = 9000;
-const rabbitHost = 'rabbitmq';
+const rabbitHost = 'localhost';
 const rabbitPort = 5672;
 const exchangeName = 'exchange.direct';
 
@@ -130,12 +130,12 @@ function authTokenExtractAndValidate(userDataStr) {
     const authTokenDataStr = authToken[1];
     const authTokenData = authTokenDataStr.split(",");
 
-    if (authTokenData.length < 3) {
+    if (authTokenData.length < 4) {
         console.log("'%s': Wrong Auth Token: %s", authTokenStr, authTokenDataStr);
         return null;
     }
 
-    const actualChecksumStr = authTokenData[2];
+    const actualChecksumStr = authTokenData[3];
     const actualChecksum = parseInt(actualChecksumStr);
 
     if (isNaN(actualChecksum) || actualChecksum != checksum(substringBeforeLast(authTokenDataStr, ','))) {
@@ -143,12 +143,13 @@ function authTokenExtractAndValidate(userDataStr) {
         return null;
     }
 
-    const consumerId = authTokenData[0];
-    const tokenTimestampStr = authTokenData[1];
+    const clientId = authTokenData[0];
+    const consumerId = authTokenData[1];
+    const tokenTimestampStr = authTokenData[2];
     const tokenTimestamp = parseInt(tokenTimestampStr);
 
     if (isNaN(tokenTimestamp) || tokenTimestamp < Date.now()) {
-        console.log("%s.%s: Token expired", consumerId, instanceId);
+        console.log("%s.%s.%s: Token expired", clientId, consumerId, instanceId);
         return null;
     }
 

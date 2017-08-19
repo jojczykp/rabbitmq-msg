@@ -91,12 +91,12 @@ class AuthService implements HttpHandler {
         String authTokenDataStr = authToken[1];
         String[] authTokenData = authTokenDataStr.split(",");
 
-        if (authTokenData.length < 3) {
+        if (authTokenData.length < 4) {
             System.out.println(String.format("%s: Wrong Auth Token: %s", authTokenStr, authTokenDataStr));
             return false;
         }
 
-        String actualChecksumStr = authTokenData[2];
+        String actualChecksumStr = authTokenData[3];
         Long actualChecksum = parseLongOrNull(actualChecksumStr);
 
         if (actualChecksum == null || actualChecksum != checksum(substringBeforeLast(authTokenDataStr, ','))) {
@@ -104,18 +104,19 @@ class AuthService implements HttpHandler {
             return false;
         }
 
-        String userId = authTokenData[0];
-        String tokenTimestampStr = authTokenData[1];
+        String clientId = authTokenData[0];
+        String userId = authTokenData[1];
+        String tokenTimestampStr = authTokenData[2];
         Long tokenTimestamp = parseLongOrNull(tokenTimestampStr);
 
         if (tokenTimestamp == null || tokenTimestamp < System.currentTimeMillis()) {
-            System.out.println(String.format("%s.%s: Token expired", userId, instanceId));
+            System.out.println(String.format("%s.%s.%s: Token expired", clientId, userId, instanceId));
             return false;
         }
 
         switch (entityType) {
             case "user":
-                return isUserAllowed(userId);
+                return isUserAllowed(clientId, userId);
             case "vhost":
                 return isVhostAllowed(params.get("vhost"));
             case "resource":
@@ -125,8 +126,9 @@ class AuthService implements HttpHandler {
         }
     }
 
-    private boolean isUserAllowed(String id) {
-        return id.startsWith("producer") || id.startsWith("consumer");
+    private boolean isUserAllowed(String clientId, String userId) {
+        return ("producer".equals(clientId) && userId.startsWith("producer")) ||
+                ("consumer".equals(clientId) && userId.startsWith("consumer"));
     }
 
     private boolean isVhostAllowed(String vhost) {

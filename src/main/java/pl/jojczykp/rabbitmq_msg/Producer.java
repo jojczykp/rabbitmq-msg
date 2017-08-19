@@ -120,7 +120,7 @@ public class Producer extends Thread {
 
     private String createAuthToken() {
         long authTokenExpiryTimestamp = System.currentTimeMillis() + AUTH_TOKEN_PERIOD_MILLIS;
-        String authTokenData = producerId + ',' + authTokenExpiryTimestamp;
+        String authTokenData = "producer," + producerId + "," + authTokenExpiryTimestamp;
         long authTokenChecksum = checksum(authTokenData);
 
         return instanceId + "," + base64Encode("Bearer " + authTokenData + ',' + authTokenChecksum);
