@@ -90,8 +90,8 @@ public class Producer extends Thread {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(HOST);
         factory.setPort(PORT);
-        factory.setUsername(createAuthToken());
-        factory.setPassword("");
+        factory.setUsername("producer");
+        factory.setPassword("producer");
         factory.setAutomaticRecoveryEnabled(false);
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
@@ -116,22 +116,6 @@ public class Producer extends Thread {
 
         System.out.println(String.format("Sent to (consumer%d to consumer%d): [%s]",
                 initialConsumerId, finalConsumerId, message));
-    }
-
-    private String createAuthToken() {
-        long authTokenExpiryTimestamp = System.currentTimeMillis() + AUTH_TOKEN_PERIOD_MILLIS;
-        String authTokenData = "producer," + producerId + "," + authTokenExpiryTimestamp;
-        long authTokenChecksum = checksum(authTokenData);
-
-        return instanceId + "," + base64Encode("Bearer " + authTokenData + ',' + authTokenChecksum);
-    }
-
-    private static long checksum(String data) { // fake - return length :)
-        return data.length();
-    }
-
-    private static String base64Encode(String data) { // fake - remove leading '[' and tailing ']' :)
-        return "[" + data + "]";
     }
 
     private void sleepRoughlyMillis(double millis) {

@@ -36,8 +36,8 @@ console.log('');
 const rabbitConnection = amqp.createConnection({
     host: rabbitHost,
     port: rabbitPort,
-    login: createProxyUserDataStr(proxyInstanceId),
-    password: '[ignored]'
+    login: 'auth-proxy',
+    password: 'auth-proxy'
 });
 
 
@@ -47,8 +47,7 @@ rabbitConnection.on('ready', () => {
 
 
 rabbitConnection.on('close', () => {
-    rabbitConnection.options.login = createProxyUserDataStr(proxyInstanceId);
-    console.log('RabbitMQ connection closed, trying to reconnect with new access token');
+    console.log('RabbitMQ connection closed, trying to reconnect');
 });
 
 
@@ -169,22 +168,8 @@ function setupConsumer(userDataStr, consumerWs) {
 }
 
 
-function createProxyUserDataStr(proxyInstanceId) {
-    var authTokenExpiryTimestamp = Date.now() + authTokenPeriodMillis;
-    var authTokenData = 'proxy,proxyUser,' + authTokenExpiryTimestamp;
-    var authTokenChecksum = checksum(authTokenData);
-
-    return proxyInstanceId + ',' + base64Encode('Bearer ' + authTokenData + ',' + authTokenChecksum);
-}
-
-
 function checksum(data) { // fake :)
     return data.length;
-}
-
-
-function base64Encode(data) { // fake :)
-    return '[' + data + ']';
 }
 
 

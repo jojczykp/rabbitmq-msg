@@ -5,6 +5,18 @@
       "password_hash": "qZoj5513Shv8dcU5DCU+9KzjUSFU/Yf4kk6Foo16QIIyNRGD",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
+    },
+    {
+      "name": "producer",
+      "password_hash": "sO4jQiHv+zyijKXTCXIRzJarAsOGkgFLoooUdderNj5BI8tT",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ""
+    },
+    {
+      "name": "auth-proxy",
+      "password_hash": "X29eryOoHpAPbvzqhgKCnavO4D01LsxsQg86c0mHdAIbKLdq",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ""
     }
   ],
   "vhosts": [
@@ -16,9 +28,23 @@
     {
       "user": "admin",
       "vhost": "/",
-      "configure": ".*",
+      "configure": "",
       "write": ".*",
       "read": ".*"
+    },
+    {
+      "user": "producer",
+      "vhost": "/",
+      "configure": "",
+      "write": "exchange\\.direct",
+      "read": ""
+    },
+    {
+      "user": "auth-proxy",
+      "vhost": "/",
+      "configure": "^proxy-subscription-.*$",
+      "write": "^proxy-subscription-.*$",
+      "read": "^proxy-subscription-.*$|^exchange\\.direct$"
     }
   ],
   "parameters": [],
@@ -42,39 +68,6 @@
   ],
   "bindings": [],
   "policies": [
-    {
-      "vhost": "/",
-      "apply-to": "queues",
-      "name": "mqtt-queues",
-      "pattern": "^mqtt-subscription-.*$",
-      "definition": {
-        "expires": 60000,
-        "max-length": 20,
-        "max-length-bytes": 1024
-      }
-    },
-    {
-      "vhost": "/",
-      "apply-to": "queues",
-      "name": "amqp-queues",
-      "pattern": "^amqp\\.subscription\\..*$",
-      "definition": {
-        "expires": 60000,
-        "max-length": 20,
-        "max-length-bytes": 1024
-      }
-    },
-    {
-      "vhost": "/",
-      "apply-to": "queues",
-      "name": "stomp-queues",
-      "pattern": "^stomp-subscription-.*$",
-      "definition": {
-        "expires": 60000,
-        "max-length": 20,
-        "max-length-bytes": 1024
-      }
-    },
     {
       "vhost": "/",
       "apply-to": "queues",

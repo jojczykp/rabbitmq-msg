@@ -101,27 +101,18 @@
                                     <alias>rabbitmq</alias>
                                 </network>
                                 <ports>
-                                    <port>5672:5672/tcp</port>   <!-- RabbitMQ AMQP    - backend producers           -->
-                                    <port>1883:1883/tcp</port>   <!-- RabbitMQ MQTT    - mqtt consumers              -->
-                                    <port>15675:15675/tcp</port> <!-- RabbitMQ MQTT/WS - web-sockets mqtt consumers  -->
-                                    <port>61613:61613/tcp</port> <!-- RabbitMQ STOMP   - stomp consumers             -->
-                                    <port>15674:15674/tcp</port> <!-- RabbitMQ STOMP/WS- web-sockets stomp consumers -->
+                                    <port>5672:5672/tcp</port>   <!-- RabbitMQ AMQP    -->
                                     <port>15672:15672/tcp</port> <!-- RabbitMQ Manager -->
                                 </ports>
                                 <volumes>
                                     <bind>
                                         <volume>${project.basedir}/src/main/resources/rabbitmq/etc:/etc/rabbitmq:ro,Z</volume>
-                                        <volume>${project.basedir}/src/main/resources/rabbitmq/plugins/rabbitmq_auth_backend_http-3.6.8.ez:/usr/lib/rabbitmq/lib/rabbitmq_server-3.6.10/plugins/rabbitmq_auth_backend_http-3.6.8.ez:ro,Z</volume>
                                     </bind>
                                 </volumes>
                                 <wait>
                                     <tcp>
                                         <ports>
                                             <port>5672</port>
-                                            <port>1883</port>
-                                            <port>15675</port>
-                                            <port>61613</port>
-                                            <port>15674</port>
                                             <port>15672</port>
                                         </ports>
                                     </tcp>
@@ -130,31 +121,6 @@
                                 <log>
                                     <color>yellow</color>
                                     <prefix>RabbitMQ</prefix>
-                                </log>
-                            </run>
-                            <watch>
-                                <mode>none</mode>
-                            </watch>
-                        </image>
-                        <!-- In potential final configuration just one 'auth' is needed -->
-                        <image>
-                            <name>library/openjdk:8-jre</name>
-                            <alias>auth-service</alias>
-                            <run>
-                                <network>
-                                    <mode>custom</mode>
-                                    <name>rabbitmq-test</name>
-                                    <alias>auth-service</alias>
-                                </network>
-                                <volumes>
-                                    <bind>
-                                        <volume>${project.basedir}/target:/target:ro,Z</volume>
-                                    </bind>
-                                </volumes>
-                                <cmd>java -cp /target/${project.build.finalName}.jar pl.jojczykp.rabbitmq_msg.AuthService</cmd>
-                                <log>
-                                    <color>blue</color>
-                                    <prefix>AuthService</prefix>
                                 </log>
                             </run>
                             <watch>

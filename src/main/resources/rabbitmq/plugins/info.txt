@@ -1,2 +1,0 @@
-File rabbitmq_auth_backend_http-3.6.8.ez downloaded from
-https://bintray.com/rabbitmq/community-plugins/rabbitmq_auth_backend_http/v3.6.8#files
