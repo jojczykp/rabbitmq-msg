@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 'use strict;'
 
 
@@ -6,163 +8,183 @@ const amqp = require('amqp');
 
 
 const listeningPort = 9000;
-const rabbitHost = 'localhost';
+const rabbitHost = 'rabbitmq';
 const rabbitPort = 5672;
 const exchangeName = 'exchange.direct';
+
+const authTokenPeriodMillis = 5 * 60 * 1000;
+
+
+const args = process.argv.slice(2);
+if (args.length < 1) {
+    console.log('Usage: %s [proxyInstanceId]', basename(process.argv[1]));
+    console.log('       Optional parameters default to 1');
+    console.log('');
+}
+
+
+const proxyInstanceId = args[0] || 1;
+
+
+console.log('Connecting to amqp://%s:%d', rabbitHost, rabbitPort);
+console.log('Listening to incoming consumers on port %d', listeningPort);
+console.log('To exit press CTRL+C');
+console.log('- proxyInstanceId: ' + proxyInstanceId);
+console.log('');
+
+
+const rabbitConnection = amqp.createConnection({
+    host: rabbitHost,
+    port: rabbitPort,
+    login: createProxyUserDataStr(proxyInstanceId),
+    password: '[ignored]'
+});
+
+
+rabbitConnection.on('ready', () => {
+    console.log('RabbitMQ connection ready');
+});
+
+
+rabbitConnection.on('close', () => {
+    rabbitConnection.options.login = createProxyUserDataStr(proxyInstanceId);
+    console.log('RabbitMQ connection closed, trying to reconnect with new access token');
+});
+
+
+rabbitConnection.on('error', (error) => {
+    console.log('RabbitMQ connection error: ' + error);
+});
 
 
 const wss = new WebSocket.Server({ port: listeningPort });
 
-
-console.log('Waiting for consumer connections on port %d to forward them to %s:%s', listeningPort, rabbitHost, rabbitPort);
-
-
-wss.on('connection', function connection(consumerWs) {
-    console.log('Incoming connection');
-
-    var started = false;
-
-    consumerWs.on('message', function incoming(userDataStr) {
-        console.log('Received from client: %s', userDataStr);
-
-        if (started) {
-            console.log('Client already started - skipping');
-        } else {
-            startRabbitClient(userDataStr, consumerWs);
+wss.on('connection', (consumerWs) => {
+    console.log('Incoming consumer connection');
+    consumerWs.on('message', (userDataStr) => {
+        try {
+            setupConsumer(userDataStr, consumerWs);
+        } catch (err) {
+            console.log(err);
         }
     });
 });
 
 
-function startRabbitClient(userDataStr, consumerWs) {
-    const authTokenExtracts = authTokenExtractAndValidate(userDataStr);
-    if (authTokenExtracts == null) {
-        console.log(userDataStr + ': Disconnecting consumer');
-        consumerWs.close();
-        console.log(userDataStr + ': Disconnected');
-        return;
+function setupConsumer(userDataStr, consumerWs) {
+    [clientId, consumerId, consumerInstanceId, tokenTimestamp] = parseConsumerUserData(userDataStr);
+
+    const logPrefix = 'AuthProxy ' + proxyInstanceId + ': For ' + clientId + '.' + consumerId + '.' + consumerInstanceId + ': ';
+    const queueName = 'proxy-subscription-' + clientId + '-' + consumerId + '-' + consumerInstanceId;
+
+    const queue = rabbitConnection.queue(queueName, { exclusive: false, autoDelete: false, durable: true }, (q) => {
+        q.bind(exchangeName, consumerId);
+        q.subscribe({ ack: true }, (message, headers, deliveryInfo, messageObject) => {
+            forwardToConsumerOrClose(message, messageObject, q);
+        });
+        setTimeout(() => closeConsumerConnection('AuthToken expired'), tokenTimestamp - Date.now());
+        console.log(logPrefix + 'Subscribed to ' + queueName);
+    });
+
+
+    function parseConsumerUserData(userDataStr) {
+        const userData = userDataStr.split(",");
+        if (userData.length < 2) {
+            throw userDataStr + ': Incorrect User Data';
+        }
+
+        const consumerInstanceId = userData[0];
+        const authTokenStr = base64Decode(userData.slice(1).join());
+        const authToken = authTokenStr.split(" ");
+        const authTokenMethod = authToken[0];
+
+        if ("Bearer" !== authTokenMethod) {
+            throw authTokenStr + ': Incorrect Auth Method: ' + authTokenMethod;
+        }
+
+        const authTokenDataStr = authToken[1];
+        const authTokenData = authTokenDataStr.split(",");
+
+        if (authTokenData.length < 4) {
+            throw authTokenStr + ': Incorrect Auth Token: ' + authTokenDataStr;
+        }
+
+        const actualChecksumStr = authTokenData[3];
+        const actualChecksum = parseInt(actualChecksumStr);
+
+        if (isNaN(actualChecksum) || actualChecksum != checksum(substringBeforeLast(authTokenDataStr, ','))) {
+            throw authTokenStr + ': Incorrect Auth Checksum: ' + actualChecksumStr;
+        }
+
+        [clientId, consumerId, tokenTimestampStr] = authTokenData;
+        const tokenTimestamp = parseInt(tokenTimestampStr);
+
+        if (isNaN(tokenTimestamp) || tokenTimestamp < Date.now()) {
+            throw clientId + '.' + consumerId + '.' + consumerInstanceId + ': Token expired';
+        }
+
+        return [clientId, consumerId, consumerInstanceId, tokenTimestamp];
     }
 
-    consumerId = authTokenExtracts.consumerId;
-    instanceId = authTokenExtracts.instanceId;
-    tokenTimestamp = authTokenExtracts.tokenTimestamp;
-    setTimeout(() => closeBothConnections('Access Token Expired'), tokenTimestamp - Date.now())
 
-    const logPrefix = consumerId + '.' + instanceId + ': ';
-    const queueName = 'ws-proxy-subscription-' + consumerId + '-' + instanceId;
-
-    console.log(logPrefix + 'Starting RabbitMQ AMQP client');
-
-    const rabbitConnection = amqp.createConnection({
-        host: rabbitHost,
-        port: rabbitPort,
-        login: userDataStr,
-        password: '[ignored]'
-    }, {
-        reconnect: false
-    });
-
-
-    rabbitConnection.on('ready', function () {
-        initialConnect = false;
-        rabbitConnection.queue(queueName, { exclusive: false, autoDelete: false, durable: true }, function (q) {
-            q.bind(exchangeName, consumerId);
-            q.subscribe({ ack: true }, function (message, headers, deliveryInfo, messageObject) {
-                onMessage(message, messageObject);
-            });
-            console.log(logPrefix + 'Subscribed');
-        });
-    });
-
-
-    function onMessage(message, messageObject) {
+    function forwardToConsumerOrClose(message, messageObject) {
         var messageStr = message.data.toString();
 
-        console.log(logPrefix + 'Forwarding %s', messageStr);
+        console.log(logPrefix + 'Forwarding [%s]', messageStr);
 
         try {
             consumerWs.send(messageStr);
             messageObject.acknowledge();
         } catch (err) {
-            closeBothConnections('Delivery failed: ' + err.toString());
+            console.log(logPrefix + 'Forwarding or ack error: ' + err);
+            closeConsumerConnection('Forwarding or acknowledging error');
         }
-    };
-
-
-    rabbitConnection.on('close', function () {
-        closeBothConnections('Connection to RabbitMQ closed');
-    });
-
-
-    rabbitConnection.on('error', function (error) {
-        console.log(logPrefix + error.toString());
-    });
-
-
-    function closeBothConnections(reason) {
-        console.log(logPrefix + reason);
-        console.log(logPrefix + 'Disconnecting from RabbitMQ');
-        rabbitConnection.disconnect();
-        console.log(logPrefix + 'Disconnected from RabbitMQ');
-        consumerWs.close(); // TODO what about reusing single connection, just dropping subscription? :)
-        console.log(logPrefix + 'Disconnected from consumer');
     }
+
+
+    function closeConsumerConnection(reason) {
+        console.log(logPrefix + 'Closing RabbitMQ channel and ConsumerWS connection (%s)', reason);
+        closeRabbitQueueChannel();
+        closeConsumerWs()
+    }
+
+
+    function closeRabbitQueueChannel() {
+        try {
+            queue.close();
+        } catch (err) {
+            console.log(logPrefix + 'Closing RabbitMQ channel error: %s', err);
+        }
+    }
+
+
+    function closeConsumerWs() {
+        try {
+            consumerWs.close();
+        } catch (err) {
+            console.log(logPrefix + 'Closing consumer connection error: %s', err);
+        }
+    }
+
 }
 
 
-function authTokenExtractAndValidate(userDataStr) {
-    const userData = userDataStr.split(",");
-    if (userData.length < 2) {
-        console.log("Wrong User Data: %s", userDataStr);
-        return null;
-    }
+function createProxyUserDataStr(proxyInstanceId) {
+    var authTokenExpiryTimestamp = Date.now() + authTokenPeriodMillis;
+    var authTokenData = 'proxy,proxyUser,' + authTokenExpiryTimestamp;
+    var authTokenChecksum = checksum(authTokenData);
 
-    const instanceId = userData[0];
-    const authTokenStr = base64Decode(userData.slice(1).join());
-    const authToken = authTokenStr.split(" ");
-    const authTokenMethod = authToken[0];
-
-    if ("Bearer" !== authTokenMethod) {
-        console.log("'%s': Wrong Auth Method: %s", authTokenStr, authTokenMethod);
-        return null;
-    }
-
-    const authTokenDataStr = authToken[1];
-    const authTokenData = authTokenDataStr.split(",");
-
-    if (authTokenData.length < 4) {
-        console.log("'%s': Wrong Auth Token: %s", authTokenStr, authTokenDataStr);
-        return null;
-    }
-
-    const actualChecksumStr = authTokenData[3];
-    const actualChecksum = parseInt(actualChecksumStr);
-
-    if (isNaN(actualChecksum) || actualChecksum != checksum(substringBeforeLast(authTokenDataStr, ','))) {
-        console.log("'%s': Wrong Auth Checksum: %s", authTokenStr, actualChecksumStr);
-        return null;
-    }
-
-    const clientId = authTokenData[0];
-    const consumerId = authTokenData[1];
-    const tokenTimestampStr = authTokenData[2];
-    const tokenTimestamp = parseInt(tokenTimestampStr);
-
-    if (isNaN(tokenTimestamp) || tokenTimestamp < Date.now()) {
-        console.log("%s.%s.%s: Token expired", clientId, consumerId, instanceId);
-        return null;
-    }
-
-    return {
-        consumerId: consumerId,
-        instanceId: instanceId,
-        tokenTimestamp: tokenTimestamp
-    };
+    return proxyInstanceId + ',' + base64Encode('Bearer ' + authTokenData + ',' + authTokenChecksum);
 }
 
 
-function substringBeforeLast(str, ch) {
-    return str.substring(0, str.lastIndexOf(ch));
+function checksum(data) { // fake :)
+    return data.length;
+}
+
+
+function base64Encode(data) { // fake :)
+    return '[' + data + ']';
 }
 
 
@@ -171,6 +193,11 @@ function base64Decode(data) { // fake - remove leading '[' and tailing ']' :)
 }
 
 
-function checksum(data) { // fake
-    return data.length;
+function substringBeforeLast(str, ch) {
+    return str.substring(0, str.lastIndexOf(ch));
+}
+
+
+function basename(path) {
+    return path.split(/[\\/]/).pop();
 }

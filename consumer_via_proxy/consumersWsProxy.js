@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 'use strict;'
 
 
@@ -17,7 +19,7 @@ const initialConsumerId = parseInt(args[0]);
 const finalConsumerId = parseInt(args[1]);
 const numberOfInstancesPerConsumer = parseInt(args[2] || 1);
 
-const reconnectPeriod = 1000; // ms
+const reconnectPeriodMillis = 1000;
 
 const authTokenPeriodMillis = 5 * 60 * 1000;
 
@@ -43,12 +45,12 @@ for (var consumerId = initialConsumerId ; consumerId <= finalConsumerId ; consum
 
 
 function startInstance(consumerId, instanceId) {
-    const logPrefix = consumerId + '.' + instanceId + ': ';
+    const logPrefix = 'Consumer ' + consumerId + '.' + instanceId + ': ';
 
     const ws = new WebSocket(url);
 
     ws.on('open', function open() {
-        ws.send(getUserDataStr('consumer' + consumerId, instanceId));
+        ws.send(createUserDataStr('consumer' + consumerId, instanceId));
         console.log(logPrefix + 'Subscribed');
     });
 
@@ -67,7 +69,7 @@ function startInstance(consumerId, instanceId) {
 
     ws.on('close', function incoming() {
         console.log(logPrefix + 'Reconnecting with new Access Token');
-        setTimeout(() => startInstance(consumerId, instanceId), reconnectPeriod);
+        setTimeout(() => startInstance(consumerId, instanceId), reconnectPeriodMillis);
     });
 
     ws.on('error', function incoming(error) {
@@ -76,17 +78,12 @@ function startInstance(consumerId, instanceId) {
 }
 
 
-function getUserDataStr(consumerId, instanceId) {
-    return instanceId + ',' + getAuthToken(consumerId);
-}
-
-
-function getAuthToken(consumerId) {
+function createUserDataStr(consumerId, instanceId) {
     var authTokenExpiryTimestamp = Date.now() + authTokenPeriodMillis;
     var authTokenData = 'consumer,' + consumerId + ',' + authTokenExpiryTimestamp;
     var authTokenChecksum = checksum(authTokenData);
 
-    return base64Encode('Bearer ' + authTokenData + ',' + authTokenChecksum);
+    return instanceId + ',' + base64Encode('Bearer ' + authTokenData + ',' + authTokenChecksum);
 }
 
 

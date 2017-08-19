@@ -186,7 +186,7 @@
                                     </tcp>
                                     <time>30000</time>
                                 </wait>
-                                <cmd>node /consumer_via_proxy/auth-proxy.js</cmd>
+                                <cmd>node /consumer_via_proxy/auth-proxy.js 1</cmd>
                                 <log>
                                     <color>magenta</color>
                                     <prefix>AuthProxy</prefix>

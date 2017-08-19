@@ -120,28 +120,41 @@ class AuthService implements HttpHandler {
             case "vhost":
                 return isVhostAllowed(params.get("vhost"));
             case "resource":
-                return isResourceAllowed(userId, instanceId, params);
+                return isResourceAllowed(clientId, userId, instanceId, params);
             default:
                 return false;
         }
     }
 
     private boolean isUserAllowed(String clientId, String userId) {
-        return ("producer".equals(clientId) && userId.startsWith("producer")) ||
-                ("consumer".equals(clientId) && userId.startsWith("consumer"));
+        return isValidProxy(clientId) ||
+                isValidProducer(clientId, userId) ||
+                isValidConsumer(clientId, userId);
+    }
+
+    private boolean isValidProxy(String clientId) {
+        return "proxy".equals(clientId);
+    }
+
+    private boolean isValidProducer(String clientId, String userId) {
+        return "producer".equals(clientId) && userId.startsWith("producer");
+    }
+
+    private boolean isValidConsumer(String clientId, String userId) {
+        return "consumer".equals(clientId) && userId.startsWith("consumer");
     }
 
     private boolean isVhostAllowed(String vhost) {
         return VHOST.equals(vhost);
     }
 
-    private boolean isResourceAllowed(String userId, String instanceId, Map<String, String> params) {
+    private boolean isResourceAllowed(String clientId, String userId, String instanceId, Map<String, String> params) {
         String type = params.get("resource");
         String name = params.get("name");
 
         switch (type) {
             case "exchange":
-                return isExchangeAllowed(userId, name, params.get("permission"));
+                return isExchangeAllowed(clientId, name, params.get("permission"));
             case "topic":
             return isTopicAllowed(userId, name, params.get("permission"));
             case "queue":
@@ -151,28 +164,34 @@ class AuthService implements HttpHandler {
         }
     }
 
-    private boolean isExchangeAllowed(String userId, String name, String permission) {
+    private boolean isExchangeAllowed(String clientId, String name, String permission) {
         return EXCHANGE_NAME.equals(name) &&
-                (isProducerAllowed(userId, permission) || isConsumerAllowed(userId, permission));
+                (isProxyAllowed(clientId, permission) ||
+                        isProducerAllowed(clientId, permission) ||
+                        isConsumerAllowed(clientId, permission));
     }
 
     private boolean isTopicAllowed(String userId, String name, String permission) {
         return userId.equals(name) && "read".equals(permission);
     }
 
-    private boolean isProducerAllowed(String producerId, String permission) {
-        return producerId.startsWith("producer") && "write".equals(permission);
+    private boolean isProxyAllowed(String clientId, String permission) {
+        return "proxy".equals(clientId) && "read".equals(permission);
     }
 
-    private boolean isConsumerAllowed(String consumerId, String permission) {
-        return consumerId.startsWith("consumer") && "read".equals(permission);
+    private boolean isProducerAllowed(String clientId, String permission) {
+        return "producer".equals(clientId) && "write".equals(permission);
+    }
+
+    private boolean isConsumerAllowed(String clientId, String permission) {
+        return "consumer".equals(clientId) && "read".equals(permission);
     }
 
     private boolean isQueueAllowed(String consumerId, String instanceId, String queueName) {
         return isQueueAmqpAllowed(consumerId, instanceId, queueName) ||
                 isQueueMqttAllowed(consumerId, instanceId, queueName) ||
                 isQueueStompAllowed(consumerId, instanceId, queueName) ||
-                isQueueWsProxyAllowed(consumerId, instanceId, queueName);
+                isQueueProxyAllowed(queueName);
     }
 
     private boolean isQueueAmqpAllowed(String consumerId, String instanceId, String queueName) {
@@ -190,9 +209,8 @@ class AuthService implements HttpHandler {
         return allowedQueueName.equals(queueName);
     }
 
-    private boolean isQueueWsProxyAllowed(String consumerId, String instanceId, String queueName) {
-        String allowedQueueName = "ws-proxy-subscription-" + consumerId + "-" + instanceId;
-        return allowedQueueName.equals(queueName);
+    private boolean isQueueProxyAllowed(String queueName) {
+        return queueName.startsWith("proxy-subscription-");
     }
 
     private Map<String, String> getParams(HttpExchange httpExchange) throws IOException {
