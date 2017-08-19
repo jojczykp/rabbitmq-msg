@@ -51,7 +51,7 @@
   "global_parameters": [
     {
       "name": "cluster_name",
-      "value": "rabbitmq-cluster"
+      "value": "push-notifications-cluster"
     }
   ],
   "queues": [],

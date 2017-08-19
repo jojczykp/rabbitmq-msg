@@ -18,6 +18,7 @@ public class Producer extends Thread {
     private static final String HOST = "localhost";
     private static final int PORT = 5672;
     private static final String EXCHANGE_NAME = "exchange.direct";
+    private static final Integer DELIVERY_MODE_PERSISTENT = 2;
 
     private final String producerId;
     private final int instanceId;
@@ -67,7 +68,7 @@ public class Producer extends Thread {
                     channel = connect();
                 }
                 String message = String.format("%s.%d says Hello %d", producerId, instanceId, messageNumber);
-                broadcastMessage(message);
+                sendMessage(message);
                 messageNumber++;
             } catch (Exception e) {
                 System.out.println(String.format("%s.%d: Reconnecting with new Access Token", producerId, instanceId));
@@ -101,13 +102,14 @@ public class Producer extends Thread {
         return channel;
     }
 
-    private void broadcastMessage(String message) throws IOException {
+    private void sendMessage(String message) throws IOException {
         String to = "consumer" + initialConsumerId;
         List<String> bcc = IntStream.range(initialConsumerId + 1, finalConsumerId + 1)
                 .mapToObj(i -> "consumer" + i)
                 .collect(Collectors.toList());
 
         BasicProperties props = new BasicProperties.Builder()
+                .deliveryMode(DELIVERY_MODE_PERSISTENT)
                 .headers(ImmutableMap.of("BCC", bcc))
                 .build();
 
