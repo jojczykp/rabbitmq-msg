@@ -46,11 +46,11 @@ Security provided by RabbitMQ using custom plugin and external HTTP API.
 
     1. _producer1_ sending to consumer1 and consumer2:
     
-        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producer 1 1 1 2`
+        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producers 1 1 1 2`
 
     2. _producer2_ sending to consumer2 only:
     
-        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producer 2 2 2 2`
+        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producers 2 2 2 2`
 
 4. Consumers (in `consumer` folder)
 
@@ -81,7 +81,7 @@ Security provided by RabbitMQ using custom plugin and external HTTP API.
     
     1. Producers
     
-        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producer 1 2 1001 5000`
+        `java -cp target/rabbitmq-msg-0.0.1.jar pl.jojczykp.rabbitmq_msg.Producers 1 2 1001 5000`
         
     2. Consumers
     

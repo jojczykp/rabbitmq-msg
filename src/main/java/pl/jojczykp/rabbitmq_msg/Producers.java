@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-public class Producer extends Thread {
+public class Producers extends Thread {
 
     private static final String HOST = "localhost";
     private static final int PORT = 5672;
@@ -24,7 +24,7 @@ public class Producer extends Thread {
 
     public static void main(String[] args) throws IOException, TimeoutException {
         if (args.length < 4) {
-            System.err.println("Usage: java -cp <app-jar> " + Producer.class.getName() +
+            System.err.println("Usage: java -cp <app-jar> " + Producers.class.getName() +
                     " initialProducerId finalProducerId initialConsumerId finalConsumerId");
             System.exit(1);
         }
@@ -43,11 +43,11 @@ public class Producer extends Thread {
         System.out.println();
 
         for (int producerNumber = initialProducerId ; producerNumber <= finalProducerId ; producerNumber++) {
-            new Producer("producer" + producerNumber, initialConsumerId, finalConsumerId).start();
+            new Producers("producer" + producerNumber, initialConsumerId, finalConsumerId).start();
         }
     }
 
-    private Producer(String producerId, int initialConsumerId, int finalConsumerId) {
+    private Producers(String producerId, int initialConsumerId, int finalConsumerId) {
         this.producerId = producerId;
         this.instanceId = new Random().nextInt(1000) + 20_000;
         this.initialConsumerId = initialConsumerId;
