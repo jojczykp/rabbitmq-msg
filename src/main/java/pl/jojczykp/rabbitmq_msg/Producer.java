@@ -1,17 +1,13 @@
 package pl.jojczykp.rabbitmq_msg;
 
-import com.google.common.collect.ImmutableMap;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Producer extends Thread {
 
@@ -71,6 +67,7 @@ public class Producer extends Thread {
                 sendMessage(message);
                 messageNumber++;
             } catch (Exception e) {
+                System.out.println(String.format("%s.%d: %s", producerId, instanceId, e.getMessage()));
                 System.out.println(String.format("%s.%d: Reconnecting with new Access Token", producerId, instanceId));
                 if (channel != null) {
                     try {
@@ -81,8 +78,6 @@ public class Producer extends Thread {
                     channel = null;
                 }
             }
-
-            sleepRoughlyMillis(5_000);
         }
     }
 
@@ -96,43 +91,32 @@ public class Producer extends Thread {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
         channel.exchangeDeclarePassive(EXCHANGE_NAME);
+        channel.confirmSelect();
 
         System.out.println(String.format("%s.%s: Connected", producerId, instanceId));
 
         return channel;
     }
 
-    private void sendMessage(String message) throws IOException {
-        String to = "consumer" + initialConsumerId;
-        List<String> bcc = IntStream.range(initialConsumerId + 1, finalConsumerId + 1)
-                .mapToObj(i -> "consumer" + i)
-                .collect(Collectors.toList());
-
-        BasicProperties props = new BasicProperties.Builder()
-                .deliveryMode(DELIVERY_MODE_PERSISTENT)
-                .headers(ImmutableMap.of("BCC", bcc))
-                .build();
-
-        channel.basicPublish(EXCHANGE_NAME, to, props, message.getBytes());
-
-        System.out.println(String.format("Sent to (consumer%d to consumer%d): [%s]",
+    private void sendMessage(String message) throws IOException, InterruptedException {
+        System.out.print(String.format("Sending to (consumer%d to consumer%d): [%s] ",
                 initialConsumerId, finalConsumerId, message));
-    }
 
-    private void sleepRoughlyMillis(double millis) {
-        double random = Math.random();
-        double deviation = Math.round(random * millis - millis / 2);
-        long duration = (long) (millis + deviation);
-
-        if (duration == 0) {
-            System.out.println(String.format("%s.%s: No delay between sends!", producerId, instanceId));
-            return;
+        for (int consumerId = initialConsumerId ; consumerId <= finalConsumerId ; consumerId++) {
+            BasicProperties props = new BasicProperties.Builder()
+//                    .deliveryMode(DELIVERY_MODE_PERSISTENT) // Works with durable queues to make sure queue content survives broker restarts
+//                    .headers(ImmutableMap.of("BCC", asList("otherConsumer1", "otherConsumer2"))) // May be used for sending to group, seem lot of memory consumption in tests however
+                    .build();
+            String to = "consumer" + consumerId;
+            channel.basicPublish(EXCHANGE_NAME, to, props, message.getBytes());
         }
 
-        try {
-            Thread.sleep(duration);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        System.out.print("Confirming ");
+
+        channel.waitForConfirmsOrDie();
+
+        System.out.println("OK");
+
     }
+
 }

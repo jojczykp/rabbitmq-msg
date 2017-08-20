@@ -21,7 +21,7 @@ const numberOfInstancesPerConsumer = parseInt(args[2] || 1);
 
 const reconnectPeriodMillis = 1000;
 
-const authTokenPeriodMillis = 5 * 60 * 1000;
+const authTokenPeriodMillis = 1 * 60 * 60 * 1000;
 
 
 console.log('Connecting to ' + url);
@@ -30,6 +30,7 @@ console.log('- initialConsumerId: ' + initialConsumerId);
 console.log('- finalConsumerId:   ' + finalConsumerId);
 console.log('- numberOfConsumers: ' + (finalConsumerId - initialConsumerId + 1));
 console.log('- numberOfInstancesPerConsumer: ' + numberOfInstancesPerConsumer);
+console.log('- totalNumberOfConsumerInstances: ' + (finalConsumerId - initialConsumerId + 1) * numberOfInstancesPerConsumer);
 console.log('');
 
 
@@ -51,7 +52,7 @@ function startInstance(consumerId, instanceId) {
 
     ws.on('open', function open() {
         ws.send(createUserDataStr('consumer' + consumerId, instanceId));
-        console.log(logPrefix + 'Subscribed');
+        console.log(logPrefix + 'Connected');
     });
 
     ws.on('message', function incoming(data) {
