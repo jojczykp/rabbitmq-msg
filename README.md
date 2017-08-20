@@ -2,11 +2,7 @@
 
 Pet project for playing with RabbitMQ in Java and Node.js
 
-Demonstrates communication between Producers and Consumers via with RabbitMQ with AuthProxy and measures performance.
-* [https://www.rabbitmq.com/](https://www.rabbitmq.com/).
-* [https://rabbitmq.docs.pivotal.io/36/](https://rabbitmq.docs.pivotal.io/36/).
-* [Other tests](../../tree/direct_rabbit_access).
-  (AuthService behind RabbitMQ instead of AuthProxy, AMQP, MQTT, STOMP talkin directly to RabbitMQ comparison).
+Demonstrates communication between Producers and Consumers via with RabbitMQ with AuthProxy and measures its performance.
 
 ## Communication Architecture
 
@@ -125,6 +121,13 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
         
 # Performance
 
+Procedure above sets complete environment that tests can be executed in.
+I decided however to avoid using docker since it may affect results significantly.
+
+Instead, I run RabbitMQ in VirtualBox with dedicated memory, CPU cores and IP address.
+This is still far from perfect (ideally real network should be used), but should be more reliable
+than docker.
+
 ## Preparation
     
 I have conducted a few simple performance tests to understand capacity of proposed configuration.
@@ -165,6 +168,9 @@ Average results:
 In all cases:
 * All messages were correctly delivered to all clients.
 * Bottleneck seems to be in RabbitMQ CPU.
+* Due to other tests, with multiple instances for each consumer (also with CC: field set by Producer)
+  I noticed that the more recipients message has, the higher memory consumption is,
+  sometimes it was doubled (don'r know why - message cached longer collecting ACKs?). 
 
 # Potential extensions
 
@@ -173,3 +179,10 @@ In all cases:
   AuthProxy to RabbitMQ).
 * Rewrite AuthProxy in Java (i.e. with [Vertex](http://vertx.io/)? ;-) )
 * ...
+
+# References
+
+* [https://www.rabbitmq.com/](https://www.rabbitmq.com/).
+* [https://rabbitmq.docs.pivotal.io/36/](https://rabbitmq.docs.pivotal.io/36/).
+* [Other tests](../../tree/direct_rabbit_access).
+  (AuthService behind RabbitMQ instead of AuthProxy, AMQP, MQTT, STOMP talkin directly to RabbitMQ comparison).
