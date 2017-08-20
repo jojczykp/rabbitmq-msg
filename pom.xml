@@ -161,41 +161,6 @@
                                 <mode>none</mode>
                             </watch>
                         </image>
-                        <image>
-                            <name>library/node:8.2.1</name>
-                            <alias>auth-proxy</alias>
-                            <run>
-                                <network>
-                                    <mode>custom</mode>
-                                    <name>rabbitmq-test</name>
-                                    <alias>auth-proxy</alias>
-                                </network>
-                                <ports>
-                                    <port>9000:9000/tcp</port>
-                                </ports>
-                                <volumes>
-                                    <bind>
-                                        <volume>${project.basedir}/consumer_via_proxy:/consumer_via_proxy:ro,Z</volume>
-                                    </bind>
-                                </volumes>
-                                <wait>
-                                    <tcp>
-                                        <ports>
-                                            <port>9000</port>
-                                        </ports>
-                                    </tcp>
-                                    <time>30000</time>
-                                </wait>
-                                <cmd>node /consumer_via_proxy/auth-proxy.js 1</cmd>
-                                <log>
-                                    <color>magenta</color>
-                                    <prefix>AuthProxy</prefix>
-                                </log>
-                            </run>
-                            <watch>
-                                <mode>none</mode>
-                            </watch>
-                        </image>
                     </images>
                 </configuration>
                 <executions>

@@ -155,38 +155,3 @@ Security provided by RabbitMQ using custom plugin and external HTTP API.
 Current winner seems to be MQTT :)
 
 // To Be Done - ws:// versions of MQTT and STOMP.
-
-
-# WS Client via auth-proxy
-
-Client connects to _auth-proxy_ (ws:// or wss://), which provides
-authentication, authorization, TLS, then forwards to RabbitMQ.
-
-There are a few benefits of using this solution:
-- TLS security separated from broker
-- Easy implementation of token expiry (drop connection in proxy + reconnect)
-- No _AuthService_ needed 
-- No custom _rabbit_auth_backend_http_ plugin needed
-- Customizable (in language different than erlang :P )
-
-Current PoC assumes AMQP between _auth-proxy_ and RabbitMQ. AMQP gives control
-over sending ACKs so that we can skip sending it to RabbitMQ if delivery to
-client failed. Message stays in a queue redy for redelivery.
-
-Since previous tests show MQTT more performant, it would be great to try
-using MQTT with client giving control over PUBACKs nad, if better, replace
-AMQP here. Or tune AMQP (i.e. sharing single connection with multiple channels
-looks promising).
-
-
-# WS Client via auth-proxy - Some performance results
-    
-    `cd consumers_via_proxy`
-    
-    `npm install`
-    
-    `node consumersWsProxy.js 10001 12002 2`
-    
-    - Used ~8.8 GB of RAM
-    - Client connections established in 35 secs)
-    - Managed to deliver all messages
