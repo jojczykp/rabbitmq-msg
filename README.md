@@ -5,7 +5,8 @@ Pet project for playing with RabbitMQ.
 Demonstrates communication between Producers and Consumers via with RabbitMQ with AuthProxy and measures performance.
 * [https://www.rabbitmq.com/](https://www.rabbitmq.com/)
 * [https://rabbitmq.docs.pivotal.io/36/](https://rabbitmq.docs.pivotal.io/36/)
-* [Other tests (no AuthProxy, AMQP, MQTT, STOMP directly to RabbitMQ)](TBD)
+* [Other tests](../../tree/direct_rabbit_access)
+  (AuthService behind RabbitMQ instead of AuthProxy, AMQP, MQTT, STOMP directly to RabbitMQ)
 
 ## Communication Architecture
 
