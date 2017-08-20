@@ -162,4 +162,5 @@ Average results:
 * Use wss:// (instead of ws://) between Consumer and AuthProxy
 * Extend protocol between Consumer and AuthProxy by introducing ACKs (that can be kept in sync with ACKs sent from
   AuthProxy to RabbitMQ).
+  AuthProxy to RaabbitMQ).
 * ...
