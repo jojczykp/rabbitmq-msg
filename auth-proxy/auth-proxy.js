@@ -60,11 +60,20 @@ const wss = new WebSocket.Server({ port: listeningPort });
 
 wss.on('connection', (consumerWs) => {
     console.log('Incoming consumer connection');
+
+    var queue;
+
     consumerWs.on('message', (userDataStr) => {
         try {
-            setupConsumer(userDataStr, consumerWs);
+            queue = setupConsumer(userDataStr, consumerWs);
         } catch (err) {
             console.log(err);
+        }
+    });
+
+    consumerWs.on('close', () => {
+        if (queue) {
+            queue.close();
         }
     });
 });
@@ -85,6 +94,7 @@ function setupConsumer(userDataStr, consumerWs) {
         console.log(logPrefix + 'Subscribed to ' + queueName);
     });
 
+    return queue;
 
     function parseConsumerUserData(userDataStr) {
         const userData = userDataStr.split(",");
