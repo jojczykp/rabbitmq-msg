@@ -19,16 +19,17 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
 
 ## Features
 
-* Short time buffering.
+* Reliability.
 
-  By queue expiry time (defined with policy in _rabbit_definitions.json_).
-  
-  RabbitMQ waits for a while before dropping queue after Consumer disconnected, giving a chance
-  to reconnect and consume messages delivered in the meantime.
+  - ACKs between RabbitMQ and Producers/AuthProxy.
+  - Durable queue with expiry time (defined with policy in _rabbit_definitions.json_).
+    That makes RabbitMQ to wait for a while before dropping queue after Consumer disconnected, giving a chance
+    to reconnect and consume messages delivered in the meantime.
 
 * Security.
 
-  AuthProxy validates Consumer access token. Also drops connection when token expired.
+  - AuthProxy validates Consumer access token on incoming connection.
+  - AuthProxy drops connection when token expired.
 
 
 # Running steps
