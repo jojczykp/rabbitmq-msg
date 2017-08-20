@@ -63,21 +63,31 @@ public class Producers extends Thread {
                 if (channel == null) {
                     channel = connect();
                 }
+
                 String message = String.format("%s.%d says Hello %d", producerId, instanceId, messageNumber);
                 sendMessage(message);
                 messageNumber++;
+
+                // Comment out for performance testing
+                sleep(3000);
+
             } catch (Exception e) {
-                System.out.println(String.format("%s.%d: %s", producerId, instanceId, e.getMessage()));
-                System.out.println(String.format("%s.%d: Reconnecting with new Access Token", producerId, instanceId));
-                if (channel != null) {
-                    try {
-                        channel.abort();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    channel = null;
-                }
+                handleSendingException(e);
             }
+        }
+    }
+
+    private void handleSendingException(Exception e) {
+        System.out.println(String.format("%s.%d: %s", producerId, instanceId, e.getMessage()));
+        System.out.println(String.format("%s.%d: Reconnecting with new Access Token", producerId, instanceId));
+
+        if (channel != null) {
+            try {
+                channel.abort();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            channel = null;
         }
     }
 
@@ -99,7 +109,7 @@ public class Producers extends Thread {
     }
 
     private void sendMessage(String message) throws IOException, InterruptedException {
-        System.out.print(String.format("Sending to (consumer%d to consumer%d): [%s] ",
+        System.out.println(String.format("Sending to (consumer%d to consumer%d): [%s] ",
                 initialConsumerId, finalConsumerId, message));
 
         for (int consumerId = initialConsumerId ; consumerId <= finalConsumerId ; consumerId++) {
@@ -111,7 +121,7 @@ public class Producers extends Thread {
             channel.basicPublish(EXCHANGE_NAME, to, props, message.getBytes());
         }
 
-        System.out.print("Confirming ");
+        System.out.println("Confirming");
 
         channel.waitForConfirmsOrDie();
 
