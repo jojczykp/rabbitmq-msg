@@ -2,18 +2,16 @@
 
 Pet project for playing with RabbitMQ.
 
-https://www.rabbitmq.com/
-
-https://rabbitmq.docs.pivotal.io/36/
-
-Demonstrates communication between Producers and Consumers via with RabbitMQ with AuthProxy.
+Demonstrates communication between Producers and Consumers via with RabbitMQ with AuthProxy and measures performance.
+* [https://www.rabbitmq.com/](https://www.rabbitmq.com/)
+* [https://rabbitmq.docs.pivotal.io/36/](https://rabbitmq.docs.pivotal.io/36/)
 
 ## Communication Architecture
 
-1. Producers send messages to RabbitMQ with AMQP
-2. RabbitMQ routes them to proper queues (queue per Consumer instance) using _consumerId_ as a _routingKey_
-3. Consumers connect to AuthProxy via WebSockets
-4. AuthProxy reads from queues with AMQP and forwards to proper Consumers.
+1. Producers send messages to RabbitMQ using AMQP.
+2. RabbitMQ routes them to proper queues (queue per Consumer instance) using _consumerId_ as a _routingKey_.
+3. Consumers connect to AuthProxy via WebSockets.
+4. AuthProxy gets fed from queues using AMQP and forwards to proper Consumers.
 
     ![Architecture](/doc/architecture.png)
 
@@ -38,7 +36,7 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
   - Possible to use TLS (wss://).
 
 
-# Running steps
+# Running
 
 
 ## Prerequisites
@@ -59,12 +57,10 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
     
     `cd ..`
 
-2. Let's start docker containers, keeping their output tailed (_-Ddocker.follow_):
+2. Let's start docker containers, keeping output tailed (_-Ddocker.follow_):
     
     `mvn docker:start -Ddocker.follow`
 
-    We should notice RabbitMQ and AuthProxy containers started
-       
 ## Consumers
 
 1. Let's install Javascript dependencies needed for Consumers:
@@ -73,7 +69,7 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
     
     `npm install`
     
-2. Let's start 3 Consumers (ids: 101, 102, 103), 2 instances each (so 6 Consumer instances total):
+2. Let's start 3 Consumers (ids: 101, 102, 103), 2 instances of each (so 6 Consumer instances total):
     
     `node ./consumers.js 101 103 2`
 
@@ -126,48 +122,51 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
     
         
 # Performance
-    
-I conducted a few simple performance tests to understand capacity of proposed configuration.
 
-Following configuration was used:
-* Fedora 26 on 8 Cores i7-6700HQ CPU @ 2.60GHz
-* 1 RabbitMQ instance (no clustering) in 4-CPU, 12GB RAM VirtualBox
-* 1 AuthProxy
-* 1 Producer
-* 40000 Consumers, 1 instance each
+## Preparation
     
-A few code changes were required:
-* Commenting out sleep in Producer, so that it can produce messages as fast as RabbitMQ can consume
-* Tweaking kernel parameters, so that it is possible to open 40000 TCP Consumer connections
-* Changing RabbitMQ host in AuthProxy and Producer to point to VirtualBox
+I have conducted a few simple performance tests to understand capacity of proposed configuration.
+
+* Following configuration was used:
+    * Fedora 26 with 8 Cores i7-6700HQ CPU @ 2.60GHz
+    * 1 RabbitMQ instance (no clustering) in 4-CPU, 16GB RAM VirtualBox
+    * 1 AuthProxy
+    * 1 Producer
+    * 40000 Consumers, 1 instance of each
     
-In all cases all messages were correctly delivered to all clients.
-
-In all cases RabbitMQ CPU seem to be bottleneck.
-
-## Durable queue, but transient messages
+* To run tests against VirtualBox rather than docker a few code changes were required:
+    * Commenting out _sleep()_ in Producers, so that they can produce messages as fast as RabbitMQ can consume.
+    * Tweaking kernel parameters, so that it is possible to open 40000 TCP Consumer connections
+      ("C10K" problem, look i.e. [here](https://stackoverflow.com/questions/410616/increasing-the-maximum-number-of-tcp-ip-connections-in-linux).
+    * Changing RabbitMQ host in AuthProxy and Producer to point to VirtualBox.
+    
+## Test 1: Durable queue, but transient messages
 
 Average results:         
-- Client connections established in 12 secs)
+- Client connections established in 12 secs
 - Used ~7.7 GB of RAM
-- Average throughput: 5000 msgs/sec
+- Throughput: 5000 msgs/sec
     
 ![Transient - Screen](/doc/test_transient.png) 
 
-## Durable queue, persistent messages
+## Test 2: Durable queue, persistent messages
          
 Average results:
-- Client connections established in 20 secs)
+- Client connections established in 20 secs
 - Used ~8.1 GB of RAM
-- Average throughput: 3500 msgs/sec
+- Throughput: 3500 msgs/sec
     
 ![Persistent - Screen](/doc/test_persistent.png) 
 
+## Conclusions
+
+In all cases:
+* All messages were correctly delivered to all clients.
+* Bottleneck seems to be in RabbitMQ CPU.
 
 # Potential extensions
 
 * Use wss:// (instead of ws://) between Consumer and AuthProxy
 * Extend protocol between Consumer and AuthProxy by introducing ACKs (that can be kept in sync with ACKs sent from
   AuthProxy to RabbitMQ).
-  AuthProxy to RaabbitMQ).
 * ...
