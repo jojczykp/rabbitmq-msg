@@ -21,15 +21,21 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
 
 * Reliability.
 
-  - ACKs between RabbitMQ and Producers/AuthProxy.
   - Durable queue with expiry time (defined with policy in _rabbit_definitions.json_).
     That makes RabbitMQ to wait for a while before dropping queue after Consumer disconnected, giving a chance
     to reconnect and consume messages delivered in the meantime.
+  - Possible to make messages from Producer persistent, so they will survive broker restart
+    (some performance penalty here).
+  - ACKs between RabbitMQ and Producers/AuthProxy.
+  - Possible ACKs between AuthProxy and Consumers (ideally synchronized with ACKs between RabbitMQ and AuthProxy).
 
 * Security.
 
   - AuthProxy validates Consumer access token on incoming connection.
-  - AuthProxy drops connection when token expired.
+  - AuthProxy drops connection when token expired, Consumer must reconnect (also possible more performant and complex
+    solution: refresh without connection dropping).
+  - AuthProxy can be the only way to access network, RabbitMQ and Producers not exposed.
+  - Possible to use TLS (wss://).
 
 
 # Running steps
