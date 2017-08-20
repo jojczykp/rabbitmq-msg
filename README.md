@@ -1,12 +1,12 @@
 # RabbitMQ MSG
 
-Pet project for playing with RabbitMQ.
+Pet project for playing with RabbitMQ in Java and Node.js
 
 Demonstrates communication between Producers and Consumers via with RabbitMQ with AuthProxy and measures performance.
-* [https://www.rabbitmq.com/](https://www.rabbitmq.com/)
-* [https://rabbitmq.docs.pivotal.io/36/](https://rabbitmq.docs.pivotal.io/36/)
-* [Other tests](../../tree/direct_rabbit_access)
-  (AuthService behind RabbitMQ instead of AuthProxy, AMQP, MQTT, STOMP directly to RabbitMQ)
+* [https://www.rabbitmq.com/](https://www.rabbitmq.com/).
+* [https://rabbitmq.docs.pivotal.io/36/](https://rabbitmq.docs.pivotal.io/36/).
+* [Other tests](../../tree/direct_rabbit_access).
+  (AuthService behind RabbitMQ instead of AuthProxy, AMQP, MQTT, STOMP talkin directly to RabbitMQ comparison).
 
 ## Communication Architecture
 
@@ -149,7 +149,7 @@ Average results:
 - Used ~7.7 GB of RAM
 - Throughput: 5000 msgs/sec
     
-![Transient - Screen](/doc/test_transient.png) 
+![Transient - Screen](/doc/test_transient_3.png) 
 
 ## Test 2: Durable queue, persistent messages
          
@@ -158,7 +158,7 @@ Average results:
 - Used ~8.1 GB of RAM
 - Throughput: 3500 msgs/sec
     
-![Persistent - Screen](/doc/test_persistent.png) 
+![Persistent - Screen](/doc/test_persistent_3.png) 
 
 ## Conclusions
 
@@ -171,4 +171,5 @@ In all cases:
 * Use wss:// (instead of ws://) between Consumer and AuthProxy
 * Extend protocol between Consumer and AuthProxy by introducing ACKs (that can be kept in sync with ACKs sent from
   AuthProxy to RabbitMQ).
+* Rewrite AuthProxy in Java (i.e. with [Vertex](http://vertx.io/)? ;-) )
 * ...
