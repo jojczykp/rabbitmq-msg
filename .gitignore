@@ -1,7 +1,7 @@
 *.iml
 .idea/
 target/
-consumer/node_modules/
-consumer/npm-debug.log
-api-proxy/node_modules/
-api-proxy/npm-debug.log
+consumers/node_modules/
+consumers/npm-debug.log
+auth-proxy/node_modules/
+auth-proxy/npm-debug.log
