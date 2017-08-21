@@ -8,10 +8,11 @@ Demonstrates communication between Producers and Consumers via with RabbitMQ wit
 
 1. Producers send messages to RabbitMQ using AMQP.
 2. RabbitMQ routes them to proper queues (queue per Consumer instance) using _consumerId_ as a _routingKey_.
-3. Consumers connect to AuthProxy via WebSockets.
+3. Consumers connect to AuthProxy via WebSockets. Queue for each is created on demand (deleted some time after
+   disconnection).
 4. AuthProxy gets fed from queues using AMQP and forwards to proper Consumers.
 
-    ![Architecture](/doc/architecture.png)
+    ![Architecture](/doc/architecture_2.png)
 
 ## Features
 
