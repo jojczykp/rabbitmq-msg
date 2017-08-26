@@ -186,4 +186,4 @@ In all cases:
 * [https://www.rabbitmq.com/](https://www.rabbitmq.com/).
 * [https://rabbitmq.docs.pivotal.io/36/](https://rabbitmq.docs.pivotal.io/36/).
 * [Other tests](../../tree/direct_rabbit_access).
-  (AuthService behind RabbitMQ instead of AuthProxy, AMQP, MQTT, STOMP talkin directly to RabbitMQ comparison).
+  (AuthService behind RabbitMQ instead of AuthProxy, AMQP, MQTT, STOMP talking directly to RabbitMQ comparison).
